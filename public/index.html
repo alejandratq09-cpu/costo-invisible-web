@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>El costo invisible de llegar al final del día</title>
+  <meta name="description" content="Una experiencia interactiva para reflexionar sobre lo que cuesta, además del dinero, cubrir las necesidades básicas de un día.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cnn fkvrect width='32' height='32' rx='6' fill='%239c3d1b'/%3E%3Cpath d='M9 22h14M9 16h14M9 10h8' stroke='%23fff' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido</a>
+
+  <header class="site-header">
+    <p class="site-header__brand">El costo invisible de llegar al final del día</p>
+  </header>
+
+  <main id="main" class="page">
+
+    <noscript>
+      <p class="notice">Esta experiencia necesita JavaScript para funcionar. Actívalo en tu navegador y vuelve a cargar la página.</p>
+    </noscript>
+
+    <!-- Pantalla de carga animada (para Render) -->
+    <div id="loading" class="loading-screen" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <p>Despertando el servidor...</p>
+      <p class="fineprint">Esto puede tardar hasta un minuto si la página llevaba mucho tiempo inactiva.</p>
+    </div>
+
+    <!-- ============ Inicio ============ -->
+    <section id="screen-intro" class="screen" aria-labelledby="intro-title" hidden>
+      <p class="kicker">Una experiencia para pensar</p>
+      <h1 id="intro-title" class="display" tabindex="-1">El costo invisible de llegar al final del día</h1>
+      <p class="lede">Un día cualquiera está hecho de decisiones que parecen pequeñas: cómo salir de casa, qué comer, cómo moverse, qué hacer con el cansancio. Cada una cuesta dinero, pero también tiempo, energía y bienestar.</p>
+      <p>Vas a recorrer seis momentos de un día. En cada uno elegirás entre dos o tres opciones y verás cómo cambian cuatro indicadores. No hay respuestas correctas, no hay puntaje y nadie gana ni pierde: al final recibirás un <strong>recibo invisible</strong> con todo lo que costó llegar hasta ahí.</p>
+
+      <form id="start-form" class="start-form">
+        <fieldset class="scenario-picker">
+          <legend>Elige el día que quieres recorrer</legend>
+          <div id="scenario-list" class="scenario-list"></div>
+        </fieldset>
+        <button type="submit" class="button button--primary" id="start-button">Comenzar el día</button>
+      </form>
+
+      <p id="intro-stats" class="fineprint" hidden></p>
+      <p class="fineprint">La experiencia es anónima: no pedimos nombre, correo ni ningún dato personal. Solo se guardan las opciones elegidas, sin identificarte, para mostrar estadísticas agregadas.</p>
+    </section>
+
+    <!-- ============ Momento ============ -->
+    <section id="screen-moment" class="screen" aria-labelledby="moment-title" hidden>
+      <div class="status-bar">
+        <div class="progress">
+          <p class="progress__text" id="progress-text"></p>
+          <div class="progress__track" aria-hidden="true"><div class="progress__fill" id="progress-fill"></div></div>
+        </div>
+        <div id="meters-live" class="meters" role="group" aria-label="Indicadores de tu día"></div>
+      </div>
+
+      <article class="moment">
+        <p class="kicker" id="moment-kicker"></p>
+        <h2 id="moment-title" class="headline" tabindex="-1"></h2>
+        <p id="moment-narrative" class="narrative"></p>
+        <p id="moment-situation" class="situation"></p>
+        <ul id="choices" class="choices" aria-labelledby="moment-situation"></ul>
+
+        <div id="consequence" class="consequence" hidden>
+          <h3 id="consequence-title" class="consequence__title" tabindex="-1">Lo que pasó</h3>
+          <p id="consequence-text" class="consequence__text"></p>
+          <ul id="consequence-effects" class="effects" aria-label="Cambios en tus indicadores"></ul>
+          <button type="button" class="button button--primary" id="next-button"></button>
+        </div>
+
+        <p id="moment-error" class="inline-error" role="alert" hidden></p>
+      </article>
+    </section>
+
+    <!-- ============ Recibo ============ -->
+    <section id="screen-receipt" class="screen" aria-labelledby="receipt-title" hidden>
+      <p class="kicker" id="receipt-scenario"></p>
+      <h2 id="receipt-title" class="display display--small" tabindex="-1">Tu recibo invisible</h2>
+      <p class="lede">Esto fue lo que costó llegar al final del día. No es una calificación: es una forma de poner a la vista lo que casi siempre se da por sentado.</p>
+
+      <div class="receipt" id="receipt">
+        <p class="receipt__head">Recibo invisible</p>
+
+        <section class="receipt__section" aria-labelledby="visible-title">
+          <h3 id="visible-title" class="receipt__title">Costos visibles</h3>
+          <p class="receipt__hint">Dinero gastado en necesidades.</p>
+          <ul id="visible-items" class="receipt__lines"></ul>
+          <p class="receipt__total"><span>Total gastado</span><span id="visible-total"></span></p>
+          <div id="income-block" hidden>
+            <ul id="income-items" class="receipt__lines receipt__lines--income"></ul>
+            <p class="receipt__total receipt__total--soft"><span>Ingresos del día</span><span id="income-total"></span></p>
+          </div>
+        </section>
+
+        <section class="receipt__section" aria-labelledby="invisible-title">
+          <h3 id="invisible-title" class="receipt__title">Costos invisibles</h3>
+          <p class="receipt__hint">Tiempo, energía, descanso y bienestar que se fueron en el camino.</p>
+          <ul id="invisible-items" class="receipt__lines"></ul>
+          <div id="notes-block" hidden>
+            <p class="receipt__subtitle">Lo que quedó en el camino</p>
+            <ul id="notes-list" class="notes"></ul>
+          </div>
+        </section>
+
+        <section class="receipt__section" aria-labelledby="end-title">
+          <h3 id="end-title" class="receipt__title">Así terminó el día</h3>
+          <div id="meters-final" class="meters meters--receipt" role="group" aria-label="Indicadores al final del día"></div>
+        </section>
+      </div>
+
+      <section class="reflection" aria-labelledby="reflection-title">
+        <h3 id="reflection-title" class="reflection__title">Una última idea</h3>
+        <p id="reflection-text"></p>
+      </section>
+
+      <details class="stats" id="stats-block">
+        <summary>Cómo decidieron otras personas este mismo día</summary>
+        <div id="stats-content" class="stats__content"></div>
+      </details>
+
+      <div class="actions">
+        <button type="button" class="button button--primary" id="other-button">Probar otro escenario</button>
+        <button type="button" class="button button--secondary" id="repeat-button">Repetir este día</button>
+      </div>
+    </section>
+
+    <!-- ============ Error ============ -->
+    <section id="screen-error" class="screen" aria-labelledby="error-title" hidden>
+      <p class="kicker">Algo no salió como esperábamos</p>
+      <h2 id="error-title" class="headline" tabindex="-1"></h2>
+      <p id="error-message" class="lede"></p>
+      <div id="error-help" class="help" hidden>
+        <p><strong>Qué revisar</strong></p>
+        <ol>
+          <li>Que PostgreSQL esté encendido y acepte conexiones.</li>
+          <li>Que el archivo <code>.env</code> exista y tenga una <code>DATABASE_URL</code> correcta.</li>
+          <li>Que hayas ejecutado <code>npm run db:init</code> para crear las tablas.</li>
+          <li>Después, reinicia el servidor con <code>npm start</code> y pulsa «Reintentar».</li>
+        </ol>
+      </div>
+      <div class="actions">
+        <button type="button" class="button button--primary" id="retry-button">Reintentar</button>
+        <button type="button" class="button button--secondary" id="restart-button" hidden>Empezar de nuevo</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>Una experiencia anónima. Las situaciones son ilustrativas: no representan a ninguna persona real ni sustituyen la experiencia de quien vive estas decisiones a diario.</p>
+  </footer>
+
+  <div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

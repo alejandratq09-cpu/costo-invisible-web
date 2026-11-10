@@ -1,0 +1,21 @@
+{
+  "name": "costo-invisible",
+  "version": "1.0.0",
+  "private": true,
+  "description": "El costo invisible de llegar al final del día: experiencia narrativa interactiva con PostgreSQL",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "db:init": "node scripts/init-db.js",
+    "db:reset": "node scripts/init-db.js --reset",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.10",
+    "pg": "^8.23.1"
+  }
+}
