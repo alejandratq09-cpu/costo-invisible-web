@@ -9,6 +9,10 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MAX_INT = 2147483647; // límite de INTEGER en PostgreSQL
 
+// Rango permitido para el presupuesto personalizado
+const MIN_BUDGET = 5000;
+const MAX_BUDGET = 500000;
+
 function bad(message) {
   return new AppError(400, 'validation_error', message);
 }
@@ -46,8 +50,22 @@ function ensureOnlyKeys(body, allowed) {
 }
 
 function validateStartSession(body) {
-  ensureOnlyKeys(body, ['scenario']);
-  return { scenario: parseSlug(body.scenario) };
+  ensureOnlyKeys(body, ['scenario', 'budget']);
+  const scenario = parseSlug(body.scenario);
+  
+  // El presupuesto es opcional. Si viene, debe ser un entero entre 5.000 y 500.000.
+  let budget = null;
+  if (body.budget !== undefined && body.budget !== null) {
+    if (typeof body.budget !== 'number' || !Number.isInteger(body.budget)) {
+      throw bad('El presupuesto debe ser un número entero.');
+    }
+    if (body.budget < MIN_BUDGET || body.budget > MAX_BUDGET) {
+      throw bad(`El presupuesto debe estar entre $${MIN_BUDGET.toLocaleString('es-CO')} y $${MAX_BUDGET.toLocaleString('es-CO')}.`);
+    }
+    budget = body.budget;
+  }
+  
+  return { scenario, budget };
 }
 
 function validateDecision(body) {
@@ -63,4 +81,10 @@ function validateEmpty(body) {
   return {};
 }
 
-module.exports = { parseUuid, parseSlug, validateStartSession, validateDecision, validateEmpty };
+module.exports = { 
+  parseUuid, 
+  parseSlug, 
+  validateStartSession, 
+  validateDecision, 
+  validateEmpty 
+};

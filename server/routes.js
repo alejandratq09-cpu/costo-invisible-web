@@ -16,14 +16,14 @@ const statsCache = new Map();
 
 const asJson = (value) => (typeof value === 'string' ? JSON.parse(value) : value);
 
-function publicScenario(row) {
+function publicScenario(row, customBudget = null) {
   return {
     slug: row.slug,
     title: row.title,
     description: row.description,
     profile: row.profile,
     currency: row.currency.trim(),
-    start: engine.publicState(engine.initialState(row)),
+    start: engine.publicState(engine.initialState(row, customBudget)),
   };
 }
 
@@ -58,7 +58,7 @@ async function listScenarios() {
       WHERE status = 'activo'
       ORDER BY sort_order, id`,
   );
-  return { status: 200, body: { scenarios: rows.map(publicScenario) } };
+  return { status: 200, body: { scenarios: rows.map((r) => publicScenario(r)) } };
 }
 
 async function getScenario({ params }) {
@@ -106,7 +106,7 @@ async function getScenario({ params }) {
 // ---------------------------------------------------------------- sesiones
 
 async function startSession({ body }) {
-  const { scenario: slug } = v.validateStartSession(body);
+  const { scenario: slug, budget } = v.validateStartSession(body);
 
   return db.withTransaction(async (client) => {
     const scenario = await findActiveScenario(client, slug);
@@ -115,16 +115,16 @@ async function startSession({ body }) {
       throw new AppError(409, 'scenario_empty', 'Este escenario todavía no tiene momentos.');
     }
     const inserted = await client.query(
-      'INSERT INTO sessions (scenario_id) VALUES ($1) RETURNING id',
-      [scenario.id],
+      'INSERT INTO sessions (scenario_id, current_money) VALUES ($1, $2) RETURNING id',
+      [scenario.id, budget !== null ? budget : null],
     );
     return {
       status: 201,
       body: {
         sessionId: inserted.rows[0].id,
-        scenario: publicScenario(scenario),
+        scenario: publicScenario(scenario, budget),
         totalMoments: count.rows[0].n,
-        state: engine.publicState(engine.initialState(scenario)),
+        state: engine.publicState(engine.initialState(scenario, budget)),
       },
     };
   });
@@ -132,7 +132,7 @@ async function startSession({ body }) {
 
 async function loadSessionForUpdate(client, sessionId) {
   const session = await client.query(
-    'SELECT id, scenario_id, status FROM sessions WHERE id = $1 FOR UPDATE',
+    'SELECT id, scenario_id, status, current_money FROM sessions WHERE id = $1 FOR UPDATE',
     [sessionId],
   );
   if (session.rows.length === 0) {
@@ -164,7 +164,8 @@ async function loadSessionForUpdate(client, sessionId) {
     [sessionId],
   )).rows;
 
-  const { state, steps } = engine.replay(scenario, decided);
+  const customBudget = s.current_money !== null ? Number(s.current_money) : null;
+  const { state, steps } = engine.replay(scenario, decided, customBudget);
   return { session: s, scenario, moments, steps, state };
 }
 
@@ -227,6 +228,39 @@ async function recordDecision({ params, body }) {
   });
 }
 
+async function undoLastDecision({ params }) {
+  const sessionId = v.parseUuid(params.id, 'sessionId');
+
+  return db.withTransaction(async (client) => {
+    const ctx = await loadSessionForUpdate(client, sessionId);
+    
+    if (ctx.session.status !== 'en_curso') {
+      throw new AppError(409, 'session_closed', 'Esta experiencia ya terminó. No puedes deshacer.');
+    }
+    if (ctx.steps.length === 0) {
+      throw new AppError(409, 'no_decisions', 'No hay decisiones para deshacer.');
+    }
+
+    await client.query(
+      `DELETE FROM decisions WHERE id = (
+        SELECT id FROM decisions WHERE session_id = $1 ORDER BY recorded_at DESC LIMIT 1
+      )`,
+      [sessionId],
+    );
+
+    const updatedCtx = await loadSessionForUpdate(client, sessionId);
+    
+    return {
+      status: 200,
+      body: {
+        state: engine.publicState(updatedCtx.state),
+        answered: updatedCtx.steps.length,
+        total: updatedCtx.moments.length,
+      },
+    };
+  });
+}
+
 function resultToApi(row, scenario) {
   const visible = asJson(row.visible_summary);
   const invisible = asJson(row.invisible_summary);
@@ -270,7 +304,7 @@ async function completeSession({ params, body }) {
       throw new AppError(409, 'incomplete', 'Todavía faltan momentos por decidir antes de ver el recibo.');
     }
 
-    const r = engine.buildResult(ctx.scenario, ctx.steps, ctx.state);
+    const r = engine.buildResult(ctx.scenario, ctx.steps, ctx.state, ctx.session.current_money);
 
     const saved = await client.query(
       `INSERT INTO session_results
@@ -297,7 +331,6 @@ async function completeSession({ params, body }) {
 // ---------------------------------------------------------------- estadísticas
 
 async function getStats({ query }) {
-  // CORRECCIÓN: En Express, query es un objeto, no un Map.
   const slugParam = query.scenario || null;
   const slug = slugParam === null ? null : v.parseSlug(slugParam);
   const cacheKey = slug || '*';
@@ -413,9 +446,9 @@ module.exports = {
   getScenario,
   startSession,
   recordDecision,
+  undoLastDecision,
   completeSession,
   getStats,
   markAbandoned,
   MIN_GROUP_SIZE,
 };
-

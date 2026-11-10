@@ -107,8 +107,8 @@
 
   // ------------------------------------------------------------ pantallas
 
-  const SCREENS = ['intro', 'moment', 'receipt', 'error'];
-  const HEADINGS = { intro: '#intro-title', moment: '#moment-title', receipt: '#receipt-title', error: '#error-title' };
+  const SCREENS = ['intro', 'moment', 'receipt', 'error', 'history'];
+  const HEADINGS = { intro: '#intro-title', moment: '#moment-title', receipt: '#receipt-title', error: '#error-title', history: '#history-title' };
 
   function showScreen(name) {
     $('#loading').hidden = true;
@@ -191,6 +191,74 @@
       `Energía: ${state.energy} de 100. Bienestar: ${state.wellbeing} de 100.`;
   }
 
+  // ------------------------------------------------------------ historial (localStorage)
+
+  const HISTORY_KEY = 'costo-invisible-history';
+
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveHistory(history) {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch (err) {
+      console.error('No se pudo guardar el historial:', err);
+    }
+  }
+
+  function addToHistory(result) {
+    const history = loadHistory();
+    history.unshift({
+      date: new Date().toISOString(),
+      scenario: result.scenario.title,
+      finalMoney: result.final.money,
+      finalTime: result.final.time,
+      finalEnergy: result.final.energy,
+      finalWellbeing: result.final.wellbeing,
+      reflection: result.scenario.reflection,
+    });
+    // Guardar solo los últimos 10
+    if (history.length > 10) history.length = 10;
+    saveHistory(history);
+  }
+
+  function renderHistory() {
+    const list = $('#history-list');
+    list.replaceChildren();
+    const history = loadHistory();
+
+    if (history.length === 0) {
+      list.append(el('p', { class: 'stats__note', text: 'Todavía no has guardado ningún recorrido. ¡Juega uno y vuelve aquí!' }));
+      return;
+    }
+
+    for (const item of history) {
+      const date = new Date(item.date).toLocaleDateString('es-CO', {
+        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+      const card = el('div', { class: 'history-card' },
+        el('div', { class: 'history-card__header' },
+          el('span', { class: 'history-card__date', text: date }),
+          el('span', { class: 'history-card__scenario', text: item.scenario })
+        ),
+        el('div', { class: 'history-card__stats' },
+          el('span', {}, `💰 ${formatMoney(item.finalMoney, 'COP')}`),
+          el('span', {}, `⏱ ${formatDuration(item.finalTime)}`),
+          el('span', {}, `⚡ ${item.finalEnergy}/100`),
+          el('span', {}, `💜 ${item.finalWellbeing}/100`)
+        ),
+        el('p', { class: 'history-card__reflection', text: item.reflection })
+      );
+      list.append(card);
+    }
+  }
+
   // ------------------------------------------------------------ inicio
 
   function renderIntro() {
@@ -229,7 +297,6 @@
   
   async function loadIntroStats() {
     try {
-      // Le pasamos un escenario por defecto para que el backend no falle
       const stats = await api('GET', '/api/stats?scenario=dia-con-horario-fijo');
       const note = $('#intro-stats');
       if (stats.totalCompleted > 0) {
@@ -248,9 +315,18 @@
     button.disabled = true;
     button.textContent = 'Preparando tu día…';
     try {
+      const budgetInput = $('#budget-input');
+      let customBudget = null;
+      if (budgetInput) {
+        customBudget = parseInt(budgetInput.value, 10);
+        if (isNaN(customBudget) || customBudget < 5000 || customBudget > 500000) {
+          throw new ApiError(0, 'invalid_budget', 'El presupuesto debe estar entre $5.000 y $500.000.');
+        }
+      }
+
       const [full, session] = await Promise.all([
         api('GET', `/api/scenarios/${encodeURIComponent(slug)}`),
-        api('POST', '/api/sessions', { scenario: slug }),
+        api('POST', '/api/sessions', { scenario: slug, budget: customBudget }),
       ]);
       if (full.moments.length !== session.totalMoments) {
         throw new ApiError(0, 'inconsistent', 'Los datos del escenario cambiaron mientras empezabas. Vuelve a intentarlo.');
@@ -304,7 +380,7 @@
       }
       const button = el('button', {
         type: 'button', class: 'choice', 'data-choice': choice.id,
-        disabled: !canPay, // <--- ESTO BLOQUEA EL BOTÓN DE VERDAD
+        disabled: !canPay,
         'aria-disabled': canPay ? false : 'true',
         'aria-describedby': metaText ? metaId : false,
       },
@@ -355,7 +431,6 @@
     app.state = result.state;
     const currency = app.scenario.currency;
 
-    // Bloquear las opciones y marcar la elegida.
     const list = $('#choices');
     list.classList.add('is-locked');
     for (const b of list.querySelectorAll('.choice')) {
@@ -401,6 +476,33 @@
     next.disabled = false;
     $('#consequence').hidden = false;
 
+    const undoBtn = $('#undo-button');
+    if (undoBtn) undoBtn.remove();
+    
+    const undoContainer = el('div', { style: 'margin-top: 1rem; text-align: center;' },
+      el('button', {
+        id: 'undo-button',
+        class: 'button button--secondary',
+        type: 'button',
+        style: 'font-size: 0.9rem; padding: 0.5rem 1rem;'
+      }, '↩ Volver a decidir'),
+    );
+    $('#consequence').append(undoContainer);
+    
+    $('#undo-button').addEventListener('click', async () => {
+      if (app.busy) return;
+      app.busy = true;
+      try {
+        const res = await api('DELETE', `/api/sessions/${encodeURIComponent(app.sessionId)}/last-decision`);
+        app.state = res.state;
+        app.busy = false;
+        renderMoment();
+      } catch (err) {
+        app.busy = false;
+        alert('No se pudo deshacer: ' + err.message);
+      }
+    });
+
     announce(`${result.consequence} ${stateSummary(result.state, currency)}`);
     $('#consequence-title').focus({ preventScroll: true });
     $('#consequence').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
@@ -434,10 +536,10 @@
   function renderReceipt(result) {
     const currency = result.scenario.currency;
     app.played.add(result.scenario.slug);
+    addToHistory(result); // Guardar en el historial
 
     $('#receipt-scenario').textContent = result.scenario.title;
 
-    // Costos visibles
     const visible = $('#visible-items');
     visible.replaceChildren();
     if (result.visible.items.length === 0) {
@@ -460,7 +562,6 @@
     }
     $('#income-total').textContent = formatMoney(income.total, currency);
 
-    // Costos invisibles
     const inv = result.invisible;
     const invisible = $('#invisible-items');
     invisible.replaceChildren();
@@ -486,7 +587,6 @@
       notes.append(el('li', {}, el('span', { class: 'notes__moment', text: n.moment }), n.note));
     }
 
-    // Así terminó el día
     finalMeters = buildMeters($('#meters-final'), 'final');
     updateMeters(finalMeters, result.final, result.start, currency);
 
@@ -495,7 +595,6 @@
     $('#stats-block').open = false;
     $('#stats-content').replaceChildren(el('p', { class: 'stats__note', text: 'Cargando estadísticas…' }));
 
-    // INYECCIÓN DEL BOTÓN DE JUGAR DE NUEVO
     const receiptSection = $('#screen-receipt');
     const existingBtn = $('#play-again-button');
     if (!existingBtn) {
@@ -585,6 +684,69 @@
     app.preselect = app.scenario ? app.scenario.slug : null;
     renderIntro();
   });
+
+  // Historial
+  $('#view-history-button').addEventListener('click', () => {
+    renderHistory();
+    showScreen('history');
+  });
+
+  $('#close-history-button').addEventListener('click', () => {
+    renderIntro();
+  });
+
+  $('#clear-history-button').addEventListener('click', () => {
+    if (confirm('¿Seguro que quieres borrar tu historial? Esta acción no se puede deshacer.')) {
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistory();
+    }
+  });
+
+  const budgetInput = $('#budget-input');
+  const budgetSlider = $('#budget-slider');
+  if (budgetInput && budgetSlider) {
+    budgetInput.addEventListener('input', () => {
+      budgetSlider.value = budgetInput.value;
+    });
+    budgetSlider.addEventListener('input', () => {
+      budgetInput.value = budgetSlider.value;
+    });
+  }
+
+  const downloadBtn = $('#download-pdf-button');
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', async () => {
+      const receiptElement = $('#receipt');
+      const originalText = downloadBtn.textContent;
+      downloadBtn.textContent = 'Generando PDF...';
+      downloadBtn.disabled = true;
+
+      try {
+        const canvas = await html2canvas(receiptElement, {
+          scale: 2,
+          backgroundColor: getComputedStyle(document.body).backgroundColor,
+          useCORS: true
+        });
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgWidth = 190;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const imgData = canvas.toDataURL('image/png');
+        
+        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+        
+        const scenarioTitle = $('#receipt-scenario').textContent || 'recibo';
+        pdf.save(`recibo-invisible-${scenarioTitle.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+      } catch (error) {
+        console.error('Error al generar el PDF:', error);
+        alert('Lo sentimos, no se pudo generar el PDF. Intenta de nuevo.');
+      } finally {
+        downloadBtn.textContent = originalText;
+        downloadBtn.disabled = false;
+      }
+    });
+  }
 
   // ------------------------------------------------------------ arranque
 

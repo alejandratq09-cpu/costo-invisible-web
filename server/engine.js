@@ -24,10 +24,10 @@ const toCents = (value) => Math.round(Number(value) * 100);
 const fromCents = (cents) => cents / 100;
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 
-/** Estado de partida de un escenario. */
-function initialState(scenario) {
+/** Estado de partida de un escenario, opcionalmente con un presupuesto personalizado. */
+function initialState(scenario, customBudget = null) {
   return {
-    moneyCents: toCents(scenario.initial_money),
+    moneyCents: customBudget !== null ? toCents(customBudget) : toCents(scenario.initial_money),
     time: Number(scenario.initial_time_minutes),
     energy: Number(scenario.initial_energy),
     wellbeing: Number(scenario.initial_wellbeing),
@@ -77,8 +77,8 @@ function applyChoice(state, choice) {
  * Cada elemento de `decisions` debe traer los campos de la opción elegida
  * más `moment_title`.
  */
-function replay(scenario, decisions) {
-  let state = initialState(scenario);
+function replay(scenario, decisions, customBudget = null) {
+  let state = initialState(scenario, customBudget);
   const steps = [];
   for (const decision of decisions) {
     const { state: next, applied } = applyChoice(state, decision);
@@ -92,8 +92,8 @@ function replay(scenario, decisions) {
  * Arma el recibo invisible a partir de los pasos de la sesión.
  * Devuelve las columnas de session_results y los dos resúmenes JSON.
  */
-function buildResult(scenario, steps, finalState) {
-  const start = initialState(scenario);
+function buildResult(scenario, steps, finalState, customBudget = null) {
+  const start = initialState(scenario, customBudget);
 
   // --- Costos visibles: dinero gastado, por categoría y por concepto.
   const expenseItems = [];

@@ -24,6 +24,7 @@ const ROUTES = [
   { method: 'GET', pattern: /^\/api\/scenarios\/([^/]+)$/, keys: ['slug'], handler: routes.getScenario },
   { method: 'POST', pattern: /^\/api\/sessions$/, handler: routes.startSession, body: true, strict: true },
   { method: 'POST', pattern: /^\/api\/sessions\/([^/]+)\/decisions$/, keys: ['id'], handler: routes.recordDecision, body: true },
+  { method: 'DELETE', pattern: /^\/api\/sessions\/([^/]+)\/last-decision$/, keys: ['id'], handler: routes.undoLastDecision },
   { method: 'POST', pattern: /^\/api\/sessions\/([^/]+)\/complete$/, keys: ['id'], handler: routes.completeSession, body: true },
   { method: 'GET', pattern: /^\/api\/stats$/, handler: routes.getStats },
 ];
@@ -52,7 +53,6 @@ function sendJson(res, status, body) {
 }
 
 function sendError(res, err) {
-  // ESTA ES LA LÍNEA QUE NOS DIRÁ EL ERROR REAL EN LA TERMINAL
   console.error("🔥 ERROR REAL EN EL SERVIDOR:", err);
   const { status, code, message } = toApiError(err);
   sendJson(res, status, { error: { code, message } });

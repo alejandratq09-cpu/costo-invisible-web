@@ -34,18 +34,62 @@
       <p class="kicker">Una experiencia para pensar</p>
       <h1 id="intro-title" class="display" tabindex="-1">El costo invisible de llegar al final del día</h1>
       <p class="lede">Un día cualquiera está hecho de decisiones que parecen pequeñas: cómo salir de casa, qué comer, cómo moverse, qué hacer con el cansancio. Cada una cuesta dinero, pero también tiempo, energía y bienestar.</p>
-      <p>Vas a recorrer seis momentos de un día. En cada uno elegirás entre dos o tres opciones y verás cómo cambian cuatro indicadores. No hay respuestas correctas, no hay puntaje y nadie gana ni pierde: al final recibirás un <strong>recibo invisible</strong> con todo lo que costó llegar hasta ahí.</p>
+      <p>Vas a recorrer seis momentos de un día. En cada uno verás dos o tres opciones y tendrás que elegir solo una, lo que cambiará cuatro indicadores. No hay respuestas correctas, no hay puntaje y nadie gana ni pierde: al final recibirás un <strong>recibo invisible</strong> con todo lo que costó llegar hasta ahí.</p>
 
       <form id="start-form" class="start-form">
         <fieldset class="scenario-picker">
           <legend>Elige el día que quieres recorrer</legend>
           <div id="scenario-list" class="scenario-list"></div>
         </fieldset>
+
+        <!-- Selector de presupuesto personalizado -->
+        <div class="budget-picker">
+          <label for="budget-input" class="budget-picker__label">
+            💰 Tu presupuesto para hoy
+          </label>
+          <p class="budget-picker__hint">
+            Ajusta con cuánto dinero quieres empezar el día. El escenario se adaptará a tu presupuesto.
+          </p>
+          <div class="budget-picker__input-group">
+            <span class="budget-picker__currency">$</span>
+            <input 
+              type="number" 
+              id="budget-input" 
+              name="budget" 
+              min="5000" 
+              max="500000" 
+              step="1000" 
+              value="40000"
+              class="budget-picker__number"
+            >
+            <span class="budget-picker__unit">COP</span>
+          </div>
+          <input 
+            type="range" 
+            id="budget-slider" 
+            min="5000" 
+            max="200000" 
+            step="1000" 
+            value="40000"
+            class="budget-picker__slider"
+          >
+          <p class="budget-picker__range-info">
+            Desliza para ajustar entre $5.000 y $200.000
+          </p>
+        </div>
+
         <button type="submit" class="button button--primary" id="start-button">Comenzar el día</button>
       </form>
 
       <p id="intro-stats" class="fineprint" hidden></p>
       <p class="fineprint">La experiencia es anónima: no pedimos nombre, correo ni ningún dato personal. Solo se guardan las opciones elegidas, sin identificarte, para mostrar estadísticas agregadas.</p>
+      
+      <!-- Botón de historial -->
+      <div style="text-align: center; margin-top: 2rem;">
+        <button type="button" class="button button--secondary" id="view-history-button" style="font-size: 0.9rem; padding: 0.5rem 1.2rem;">
+          📋 Ver mi historial de recibos
+        </button>
+      </div>
     </section>
 
     <!-- ============ Momento ============ -->
@@ -112,6 +156,13 @@
         </section>
       </div>
 
+      <!-- Botón para descargar el recibo -->
+      <div style="text-align: center; margin: 2rem 0;">
+        <button type="button" class="button button--primary" id="download-pdf-button" style="background-color: #10B981; border-color: #10B981;">
+          📄 Descargar recibo en PDF
+        </button>
+      </div>
+
       <section class="reflection" aria-labelledby="reflection-title">
         <h3 id="reflection-title" class="reflection__title">Una última idea</h3>
         <p id="reflection-text"></p>
@@ -125,6 +176,20 @@
       <div class="actions">
         <button type="button" class="button button--primary" id="other-button">Probar otro escenario</button>
         <button type="button" class="button button--secondary" id="repeat-button">Repetir este día</button>
+      </div>
+    </section>
+
+    <!-- ============ Historial ============ -->
+    <section id="screen-history" class="screen" aria-labelledby="history-title" hidden>
+      <p class="kicker">Tus recorridos anteriores</p>
+      <h2 id="history-title" class="display display--small" tabindex="-1">Mi historial</h2>
+      <p class="lede">Aquí están los recibos de tus recorridos guardados en este navegador. Son anónimos y solo se guardan en tu dispositivo.</p>
+      
+      <div id="history-list" class="history-list"></div>
+      
+      <div class="actions">
+        <button type="button" class="button button--primary" id="close-history-button">Volver al inicio</button>
+        <button type="button" class="button button--secondary" id="clear-history-button">Borrar historial</button>
       </div>
     </section>
 
@@ -157,5 +222,8 @@
   <div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <script src="/app.js"></script>
+  <!-- Librerías para generar el PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
