@@ -106,7 +106,7 @@ async function getScenario({ params }) {
 // ---------------------------------------------------------------- sesiones
 
 async function startSession({ body }) {
-  const { scenario: slug, budget } = v.validateStartSession(body);
+  const { scenario: slug, budget, userName, userAge, userCity } = v.validateStartSession(body);
 
   return db.withTransaction(async (client) => {
     const scenario = await findActiveScenario(client, slug);
@@ -115,8 +115,9 @@ async function startSession({ body }) {
       throw new AppError(409, 'scenario_empty', 'Este escenario todavía no tiene momentos.');
     }
     const inserted = await client.query(
-      'INSERT INTO sessions (scenario_id, current_money) VALUES ($1, $2) RETURNING id',
-      [scenario.id, budget !== null ? budget : null],
+      `INSERT INTO sessions (scenario_id, current_money, user_name, user_age, user_city) 
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [scenario.id, budget !== null ? budget : null, userName, userAge, userCity],
     );
     return {
       status: 201,
@@ -132,7 +133,7 @@ async function startSession({ body }) {
 
 async function loadSessionForUpdate(client, sessionId) {
   const session = await client.query(
-    'SELECT id, scenario_id, status, current_money FROM sessions WHERE id = $1 FOR UPDATE',
+    'SELECT id, scenario_id, status, current_money, user_name, user_age, user_city FROM sessions WHERE id = $1 FOR UPDATE',
     [sessionId],
   );
   if (session.rows.length === 0) {
@@ -281,12 +282,13 @@ function resultToApi(row, scenario) {
     visible,
     invisible,
     emotionalState: row.emotional_state || null,
+    emotionalReflection: row.emotional_reflection || null,
   };
 }
 
 async function completeSession({ params, body }) {
   const sessionId = v.parseUuid(params.id, 'sessionId');
-  v.validateEmpty(body);
+  const { emotionalState, emotionalReflection } = v.validateCompleteSession(body);
 
   return db.withTransaction(async (client) => {
     const ctx = await loadSessionForUpdate(client, sessionId);
@@ -307,20 +309,18 @@ async function completeSession({ params, body }) {
 
     const r = engine.buildResult(ctx.scenario, ctx.steps, ctx.state, ctx.session.current_money);
     
-    // El estado emocional se envía desde el frontend (opcional)
-    const emotionalState = body.emotionalState || null;
-
     const saved = await client.query(
       `INSERT INTO session_results
          (session_id, final_money, final_time_minutes, final_energy, final_wellbeing,
           visible_total, income_total, time_spent_minutes, energy_spent, wellbeing_lost,
-          visible_summary, invisible_summary, emotional_state)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb, $13)
+          visible_summary, invisible_summary, emotional_state, emotional_reflection)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb, $13, $14)
        RETURNING *`,
       [
         sessionId, r.final_money, r.final_time_minutes, r.final_energy, r.final_wellbeing,
         r.visible_total, r.income_total, r.time_spent_minutes, r.energy_spent, r.wellbeing_lost,
-        JSON.stringify(r.visible_summary), JSON.stringify(r.invisible_summary), emotionalState,
+        JSON.stringify(r.visible_summary), JSON.stringify(r.invisible_summary),
+        emotionalState, emotionalReflection,
       ],
     );
     await client.query(

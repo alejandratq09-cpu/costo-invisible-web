@@ -1,5 +1,5 @@
 -- =====================================================================
--- ESQUEMA DEFINITIVO CON COMPONENTE EMOCIONAL
+-- ESQUEMA DEFINITIVO CON REGISTRO Y COMPONENTE EMOCIONAL
 -- =====================================================================
 
 CREATE TABLE IF NOT EXISTS scenarios (
@@ -33,7 +33,11 @@ CREATE TABLE IF NOT EXISTS sessions (
     started_at TIMESTAMPTZ NOT NULL DEFAULT now(), completed_at TIMESTAMPTZ,
     status VARCHAR(20) NOT NULL DEFAULT 'en_curso',
     current_moment_id INTEGER REFERENCES moments(id), current_money NUMERIC(12,2),
-    current_time_minutes INTEGER, current_energy SMALLINT, current_wellbeing SMALLINT
+    current_time_minutes INTEGER, current_energy SMALLINT, current_wellbeing SMALLINT,
+    -- Datos del registro (opcionales)
+    user_name TEXT,
+    user_age SMALLINT,
+    user_city TEXT
 );
 
 CREATE TABLE IF NOT EXISTS decisions (
@@ -52,9 +56,9 @@ CREATE TABLE IF NOT EXISTS session_results (
     visible_total NUMERIC(12,2) NOT NULL, income_total NUMERIC(12,2) NOT NULL,
     time_spent_minutes INTEGER NOT NULL, energy_spent INTEGER DEFAULT 0, wellbeing_lost INTEGER DEFAULT 0,
     visible_summary TEXT, invisible_summary TEXT,
-    -- Columnas para el componente emocional
-    emotional_state TEXT,
-    emotional_notes JSONB
+    -- Componente emocional
+    emotional_state TEXT,           -- Emoción elegida (ej: 'alegria', 'tristeza', 'ansiedad', 'calma')
+    emotional_reflection TEXT       -- Reflexión asociada a esa emoción
 );
 
 CREATE INDEX IF NOT EXISTS idx_decisions_session ON decisions(session_id);

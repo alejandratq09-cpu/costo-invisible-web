@@ -118,7 +118,6 @@ body {
   to { opacity: 1; transform: none; }
 }
 
-/* Animación especial para el recibo */
 #screen-receipt:not([hidden]) {
   animation: slideUpReceipt .6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -205,7 +204,6 @@ code {
 
 .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
 
-/* Botón de "Jugar de nuevo" */
 #play-again-button {
   background: var(--accent);
   color: var(--accent-ink);
@@ -223,7 +221,6 @@ code {
   box-shadow: 0 6px 20px rgba(156, 61, 27, 0.6);
 }
 
-/* Botón de "Volver a decidir" */
 #undo-button {
   background: transparent;
   color: var(--ink-soft);
@@ -238,6 +235,43 @@ code {
 #undo-button:hover {
   border-color: var(--ink-soft);
   color: var(--ink);
+}
+
+/* ---------- Registro ---------- */
+.registration-picker {
+  border: 0;
+  padding: 0;
+  margin: 0 0 1.5rem;
+}
+.registration-picker legend {
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  padding: 0;
+  margin-bottom: .75rem;
+}
+.registration-field {
+  margin-bottom: 1rem;
+}
+.registration-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: .3rem;
+  font-size: .9rem;
+}
+.registration-field input {
+  width: 100%;
+  padding: .75rem;
+  font-size: 1rem;
+  border: 2px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--sans);
+}
+.registration-field input:focus {
+  border-color: var(--accent);
+  outline: none;
 }
 
 /* ---------- Selector de escenario ---------- */
@@ -280,7 +314,6 @@ code {
   border: 1px solid var(--rule); border-radius: 999px; padding: 0 .5rem;
 }
 
-/* La barra de estado es fija: evita que tape títulos o consecuencias al desplazarse o enfocar. */
 html { scroll-padding-top: 9.5rem; scroll-padding-bottom: 1.5rem; }
 
 /* ---------- Barra de estado y medidores ---------- */
@@ -341,7 +374,6 @@ html { scroll-padding-top: 9.5rem; scroll-padding-bottom: 1.5rem; }
 .choice__text { display: block; font-weight: 600; }
 .choice__meta { display: block; margin-top: .2rem; font-size: .875rem; color: var(--ink-soft); }
 
-/* Estilo pro para opciones deshabilitadas */
 .choice[disabled] {
   border-style: dashed; border-color: var(--rule); cursor: not-allowed; background: transparent;
   opacity: 0.5; text-decoration: line-through;
@@ -444,54 +476,55 @@ html { scroll-padding-top: 9.5rem; scroll-padding-bottom: 1.5rem; }
 .help p { margin: 0 0 .4rem; }
 .help ol { margin: 0; padding-left: 1.25rem; }
 
-/* ---------- Pantalla Emocional ---------- */
-#emotional-form {
+/* ---------- Cuestionario Emocional ---------- */
+.emotion-picker {
+  border: 0;
+  padding: 0;
   margin: 2rem 0;
-  padding: 1.5rem;
-  background: var(--paper-2);
-  border-radius: var(--radius);
-  border-left: 4px solid var(--accent);
 }
-
-#emotional-input {
-  width: 100%;
+.emotion-picker legend {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 0;
+  margin-bottom: 1rem;
+}
+.emotion-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+.emotion-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   padding: 1rem;
-  font-size: 1.1rem;
+  background: var(--card);
   border: 2px solid var(--rule);
   border-radius: var(--radius);
-  background: var(--card);
-  color: var(--ink);
-  outline: none;
-  font-family: var(--sans);
-  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
-
-#emotional-input:focus {
-  border-color: var(--accent);
+.emotion-option:hover {
+  border-color: var(--ink-soft);
 }
-
-#emotional-state-block {
-  background: var(--paper-2);
-  border-left: 4px solid var(--accent);
-  padding: 1rem 1.5rem;
-  border-radius: var(--radius);
-}
-
-#emotional-state-block h3 {
-  font-family: var(--sans);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 0.8rem;
+.emotion-option input:checked + .emotion-option__text {
+  font-weight: 700;
   color: var(--accent);
-  margin: 0 0 0.5rem;
 }
-
-#emotional-state-text {
-  font-family: var(--serif);
-  font-size: 1.3rem;
-  font-style: italic;
+.emotion-option:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--paper-2);
+}
+.emotion-option input {
+  width: 1.2rem;
+  height: 1.2rem;
   margin: 0;
-  color: var(--ink);
+  accent-color: var(--accent);
+}
+.emotion-option__text {
+  font-weight: 600;
+  font-size: 1rem;
 }
 
 /* ---------- Preferencias del usuario ---------- */

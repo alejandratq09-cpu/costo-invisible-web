@@ -91,6 +91,14 @@
     { key: 'wellbeing', label: 'Bienestar' },
   ];
 
+  // Reflexiones asociadas a cada emoción
+  const EMOTIONAL_REFLECTIONS = {
+    alegria: 'La alegría de hoy es un recordatorio de que, incluso en días difíciles, hay momentos que valen la pena. Esa emoción es tuya y nadie te la puede quitar.',
+    tristeza: 'La tristeza también es parte del día. No hay que esconderla: reconocerla es el primer paso para cuidarte. Mañana será otro día, y estarás ahí para vivirlo.',
+    ansiedad: 'La ansiedad aparece cuando el día se siente más grande que nosotras. Respira. No tienes que resolver todo hoy. Un paso a la vez es suficiente.',
+    calma: 'La calma no significa que todo esté resuelto, sino que encontraste un momento de paz en medio del día. Eso también es un logro.',
+  };
+
   const app = {
     scenarios: [],
     played: new Set(),
@@ -230,6 +238,7 @@
       finalWellbeing: result.final.wellbeing,
       reflection: result.scenario.reflection,
       emotionalState: result.emotionalState || null,
+      emotionalReflection: result.emotionalReflection || null,
     });
     if (history.length > 10) history.length = 10;
     saveHistory(history);
@@ -323,6 +332,14 @@
     button.disabled = true;
     button.textContent = 'Preparando tu día…';
     try {
+      const userName = $('#user-name').value.trim();
+      const userAge = parseInt($('#user-age').value, 10);
+      const userCity = $('#user-city').value.trim();
+
+      if (!userName || !userAge || !userCity) {
+        throw new ApiError(0, 'invalid_registration', 'Por favor completa todos los campos del registro.');
+      }
+
       const budgetInput = $('#budget-input');
       let customBudget = null;
       if (budgetInput) {
@@ -334,7 +351,13 @@
 
       const [full, session] = await Promise.all([
         api('GET', `/api/scenarios/${encodeURIComponent(slug)}`),
-        api('POST', '/api/sessions', { scenario: slug, budget: customBudget }),
+        api('POST', '/api/sessions', { 
+          scenario: slug, 
+          budget: customBudget,
+          userName,
+          userAge,
+          userCity,
+        }),
       ]);
       if (full.moments.length !== session.totalMoments) {
         throw new ApiError(0, 'inconsistent', 'Los datos del escenario cambiaron mientras empezabas. Vuelve a intentarlo.');
@@ -523,20 +546,14 @@
       renderMoment();
       return;
     }
-    // Si es el último momento, mostrar la pantalla emocional
     showEmotionalScreen();
   }
 
   // ------------------------------------------------------------ pantalla emocional
 
   function showEmotionalScreen() {
-    $('#emotional-input').value = '';
+    document.querySelectorAll('input[name="emotion"]').forEach((r) => { r.checked = false; });
     showScreen('emotional');
-    // Enfocar el input
-    setTimeout(() => {
-      const input = $('#emotional-input');
-      if (input) input.focus();
-    }, 100);
   }
 
   async function submitEmotional(emotionalState) {
@@ -545,9 +562,12 @@
     button.textContent = 'Generando recibo…';
     app.busy = true;
 
+    const emotionalReflection = emotionalState ? (EMOTIONAL_REFLECTIONS[emotionalState] || null) : null;
+
     try {
       const result = await api('POST', `/api/sessions/${encodeURIComponent(app.sessionId)}/complete`, { 
-        emotionalState: emotionalState || null 
+        emotionalState: emotionalState || null,
+        emotionalReflection: emotionalReflection,
       });
       app.busy = false;
       button.disabled = false;
@@ -570,11 +590,12 @@
 
     $('#receipt-scenario').textContent = result.scenario.title;
 
-    // Mostrar estado emocional si existe
     const emotionalBlock = $('#emotional-state-block');
     const emotionalText = $('#emotional-state-text');
+    const emotionalReflectionText = $('#emotional-reflection-text');
     if (result.emotionalState) {
-      emotionalText.textContent = result.emotionalState;
+      emotionalText.textContent = `Sentiste: ${result.emotionalState}`;
+      emotionalReflectionText.textContent = result.emotionalReflection || '';
       emotionalBlock.hidden = false;
     } else {
       emotionalBlock.hidden = true;
@@ -728,9 +749,12 @@
   // Formulario emocional
   $('#emotional-form').addEventListener('submit', (event) => {
     event.preventDefault();
-    const input = $('#emotional-input');
-    const emotionalState = input ? input.value.trim() : '';
-    submitEmotional(emotionalState);
+    const checked = document.querySelector('input[name="emotion"]:checked');
+    if (!checked) {
+      alert('Por favor, elige una emoción.');
+      return;
+    }
+    submitEmotional(checked.value);
   });
 
   $('#emotional-skip').addEventListener('click', () => {
@@ -762,41 +786,6 @@
     });
     budgetSlider.addEventListener('input', () => {
       budgetInput.value = budgetSlider.value;
-    });
-  }
-
-  const downloadBtn = $('#download-pdf-button');
-  if (downloadBtn) {
-    downloadBtn.addEventListener('click', async () => {
-      const receiptElement = $('#receipt');
-      const originalText = downloadBtn.textContent;
-      downloadBtn.textContent = 'Generando PDF...';
-      downloadBtn.disabled = true;
-
-      try {
-        const canvas = await html2canvas(receiptElement, {
-          scale: 2,
-          backgroundColor: getComputedStyle(document.body).backgroundColor,
-          useCORS: true
-        });
-
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgWidth = 190;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        const imgData = canvas.toDataURL('image/png');
-        
-        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-        
-        const scenarioTitle = $('#receipt-scenario').textContent || 'recibo';
-        pdf.save(`recibo-invisible-${scenarioTitle.toLowerCase().replace(/\s+/g, '-')}.pdf`);
-      } catch (error) {
-        console.error('Error al generar el PDF:', error);
-        alert('Lo sentimos, no se pudo generar el PDF. Intenta de nuevo.');
-      } finally {
-        downloadBtn.textContent = originalText;
-        downloadBtn.disabled = false;
-      }
     });
   }
 

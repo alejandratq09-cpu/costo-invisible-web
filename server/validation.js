@@ -49,8 +49,11 @@ function ensureOnlyKeys(body, allowed) {
   }
 }
 
+/**
+ * Valida los datos del registro y el presupuesto al iniciar una sesión.
+ */
 function validateStartSession(body) {
-  ensureOnlyKeys(body, ['scenario', 'budget']);
+  ensureOnlyKeys(body, ['scenario', 'budget', 'userName', 'userAge', 'userCity']);
   const scenario = parseSlug(body.scenario);
   
   let budget = null;
@@ -63,8 +66,33 @@ function validateStartSession(body) {
     }
     budget = body.budget;
   }
-  
-  return { scenario, budget };
+
+  // Validar registro (opcional)
+  let userName = null;
+  if (body.userName !== undefined && body.userName !== null) {
+    if (typeof body.userName !== 'string' || body.userName.trim().length === 0 || body.userName.length > 80) {
+      throw bad('El nombre debe ser un texto de entre 1 y 80 caracteres.');
+    }
+    userName = body.userName.trim();
+  }
+
+  let userAge = null;
+  if (body.userAge !== undefined && body.userAge !== null) {
+    if (typeof body.userAge !== 'number' || !Number.isInteger(body.userAge) || body.userAge < 1 || body.userAge > 120) {
+      throw bad('La edad debe ser un número entero entre 1 y 120.');
+    }
+    userAge = body.userAge;
+  }
+
+  let userCity = null;
+  if (body.userCity !== undefined && body.userCity !== null) {
+    if (typeof body.userCity !== 'string' || body.userCity.trim().length === 0 || body.userCity.length > 100) {
+      throw bad('La ciudad debe ser un texto de entre 1 y 100 caracteres.');
+    }
+    userCity = body.userCity.trim();
+  }
+
+  return { scenario, budget, userName, userAge, userCity };
 }
 
 function validateDecision(body) {
@@ -77,23 +105,31 @@ function validateDecision(body) {
 
 /**
  * Valida el body de una sesión completada.
- * Permite el campo opcional `emotionalState` (un texto corto).
+ * Permite los campos `emotionalState` (emoción elegida) y `emotionalReflection` (reflexión).
  */
 function validateCompleteSession(body) {
-  ensureOnlyKeys(body, ['emotionalState']);
+  ensureOnlyKeys(body, ['emotionalState', 'emotionalReflection']);
   
   let emotionalState = null;
   if (body.emotionalState !== undefined && body.emotionalState !== null) {
-    if (typeof body.emotionalState !== 'string' || body.emotionalState.length > 200) {
-      throw bad('El estado emocional debe ser un texto de máximo 200 caracteres.');
+    if (typeof body.emotionalState !== 'string' || body.emotionalState.length > 50) {
+      throw bad('La emoción debe ser un texto de máximo 50 caracteres.');
     }
     emotionalState = body.emotionalState.trim();
   }
+
+  let emotionalReflection = null;
+  if (body.emotionalReflection !== undefined && body.emotionalReflection !== null) {
+    if (typeof body.emotionalReflection !== 'string' || body.emotionalReflection.length > 500) {
+      throw bad('La reflexión debe ser un texto de máximo 500 caracteres.');
+    }
+    emotionalReflection = body.emotionalReflection.trim();
+  }
   
-  return { emotionalState };
+  return { emotionalState, emotionalReflection };
 }
 
-// Mantengo validateEmpty por compatibilidad, pero ahora es alias de validateCompleteSession
+// Mantengo validateEmpty por compatibilidad con el código existente
 function validateEmpty(body) {
   return validateCompleteSession(body);
 }
