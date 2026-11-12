@@ -1,5 +1,5 @@
 -- =====================================================================
--- ESQUEMA DEFINITIVO
+-- ESQUEMA DEFINITIVO CON COMPONENTE EMOCIONAL
 -- =====================================================================
 
 CREATE TABLE IF NOT EXISTS scenarios (
@@ -51,7 +51,10 @@ CREATE TABLE IF NOT EXISTS session_results (
     final_wellbeing SMALLINT NOT NULL CHECK (final_wellbeing BETWEEN 0 AND 100),
     visible_total NUMERIC(12,2) NOT NULL, income_total NUMERIC(12,2) NOT NULL,
     time_spent_minutes INTEGER NOT NULL, energy_spent INTEGER DEFAULT 0, wellbeing_lost INTEGER DEFAULT 0,
-    visible_summary TEXT, invisible_summary TEXT
+    visible_summary TEXT, invisible_summary TEXT,
+    -- Columnas para el componente emocional
+    emotional_state TEXT,
+    emotional_notes JSONB
 );
 
 CREATE INDEX IF NOT EXISTS idx_decisions_session ON decisions(session_id);

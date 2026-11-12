@@ -107,8 +107,15 @@
 
   // ------------------------------------------------------------ pantallas
 
-  const SCREENS = ['intro', 'moment', 'receipt', 'error', 'history'];
-  const HEADINGS = { intro: '#intro-title', moment: '#moment-title', receipt: '#receipt-title', error: '#error-title', history: '#history-title' };
+  const SCREENS = ['intro', 'moment', 'emotional', 'receipt', 'error', 'history'];
+  const HEADINGS = { 
+    intro: '#intro-title', 
+    moment: '#moment-title', 
+    emotional: '#emotional-title', 
+    receipt: '#receipt-title', 
+    error: '#error-title', 
+    history: '#history-title' 
+  };
 
   function showScreen(name) {
     $('#loading').hidden = true;
@@ -222,8 +229,8 @@
       finalEnergy: result.final.energy,
       finalWellbeing: result.final.wellbeing,
       reflection: result.scenario.reflection,
+      emotionalState: result.emotionalState || null,
     });
-    // Guardar solo los últimos 10
     if (history.length > 10) history.length = 10;
     saveHistory(history);
   }
@@ -234,7 +241,7 @@
     const history = loadHistory();
 
     if (history.length === 0) {
-      list.append(el('p', { class: 'stats__note', text: 'Todavía no has guardado ningún recorrido. ¡Juega uno y vuelve aquí!' }));
+      list.append(el('p', { class: 'stats__note', text: 'Todavía no has guardado ningún recorrido. Juega uno y vuelve aquí.' }));
       return;
     }
 
@@ -248,11 +255,12 @@
           el('span', { class: 'history-card__scenario', text: item.scenario })
         ),
         el('div', { class: 'history-card__stats' },
-          el('span', {}, `💰 ${formatMoney(item.finalMoney, 'COP')}`),
-          el('span', {}, `⏱ ${formatDuration(item.finalTime)}`),
-          el('span', {}, `⚡ ${item.finalEnergy}/100`),
-          el('span', {}, `💜 ${item.finalWellbeing}/100`)
+          el('span', {}, `Dinero: ${formatMoney(item.finalMoney, 'COP')}`),
+          el('span', {}, `Tiempo: ${formatDuration(item.finalTime)}`),
+          el('span', {}, `Energía: ${item.finalEnergy}/100`),
+          el('span', {}, `Bienestar: ${item.finalWellbeing}/100`)
         ),
+        item.emotionalState ? el('p', { class: 'history-card__emotional', text: `Sentiste: ${item.emotionalState}` }) : null,
         el('p', { class: 'history-card__reflection', text: item.reflection })
       );
       list.append(card);
@@ -472,7 +480,7 @@
     if (!any) effects.append(el('li', { text: 'Sin cambios en tus indicadores' }));
 
     const next = $('#next-button');
-    next.textContent = result.isLast ? 'Ver mi recibo invisible' : 'Siguiente momento';
+    next.textContent = result.isLast ? 'Finalizar el día' : 'Siguiente momento';
     next.disabled = false;
     $('#consequence').hidden = false;
 
@@ -485,7 +493,7 @@
         class: 'button button--secondary',
         type: 'button',
         style: 'font-size: 0.9rem; padding: 0.5rem 1rem;'
-      }, '↩ Volver a decidir'),
+      }, 'Volver a decidir'),
     );
     $('#consequence').append(undoContainer);
     
@@ -515,19 +523,41 @@
       renderMoment();
       return;
     }
-    const button = $('#next-button');
+    // Si es el último momento, mostrar la pantalla emocional
+    showEmotionalScreen();
+  }
+
+  // ------------------------------------------------------------ pantalla emocional
+
+  function showEmotionalScreen() {
+    $('#emotional-input').value = '';
+    showScreen('emotional');
+    // Enfocar el input
+    setTimeout(() => {
+      const input = $('#emotional-input');
+      if (input) input.focus();
+    }, 100);
+  }
+
+  async function submitEmotional(emotionalState) {
+    const button = $('#emotional-submit');
     button.disabled = true;
-    button.textContent = 'Preparando tu recibo…';
+    button.textContent = 'Generando recibo…';
     app.busy = true;
+
     try {
-      const result = await api('POST', `/api/sessions/${encodeURIComponent(app.sessionId)}/complete`, {});
+      const result = await api('POST', `/api/sessions/${encodeURIComponent(app.sessionId)}/complete`, { 
+        emotionalState: emotionalState || null 
+      });
       app.busy = false;
+      button.disabled = false;
+      button.textContent = 'Ver mi recibo';
       renderReceipt(result);
     } catch (err) {
       app.busy = false;
       button.disabled = false;
-      button.textContent = 'Ver mi recibo invisible';
-      showError(err, onNext);
+      button.textContent = 'Ver mi recibo';
+      showError(err, () => showEmotionalScreen());
     }
   }
 
@@ -536,9 +566,19 @@
   function renderReceipt(result) {
     const currency = result.scenario.currency;
     app.played.add(result.scenario.slug);
-    addToHistory(result); // Guardar en el historial
+    addToHistory(result);
 
     $('#receipt-scenario').textContent = result.scenario.title;
+
+    // Mostrar estado emocional si existe
+    const emotionalBlock = $('#emotional-state-block');
+    const emotionalText = $('#emotional-state-text');
+    if (result.emotionalState) {
+      emotionalText.textContent = result.emotionalState;
+      emotionalBlock.hidden = false;
+    } else {
+      emotionalBlock.hidden = true;
+    }
 
     const visible = $('#visible-items');
     visible.replaceChildren();
@@ -683,6 +723,18 @@
   $('#restart-button').addEventListener('click', () => {
     app.preselect = app.scenario ? app.scenario.slug : null;
     renderIntro();
+  });
+
+  // Formulario emocional
+  $('#emotional-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const input = $('#emotional-input');
+    const emotionalState = input ? input.value.trim() : '';
+    submitEmotional(emotionalState);
+  });
+
+  $('#emotional-skip').addEventListener('click', () => {
+    submitEmotional(null);
   });
 
   // Historial

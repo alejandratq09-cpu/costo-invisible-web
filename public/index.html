@@ -45,7 +45,7 @@
         <!-- Selector de presupuesto personalizado -->
         <div class="budget-picker">
           <label for="budget-input" class="budget-picker__label">
-            💰 Tu presupuesto para hoy
+            Tu presupuesto para hoy
           </label>
           <p class="budget-picker__hint">
             Ajusta con cuánto dinero quieres empezar el día. El escenario se adaptará a tu presupuesto.
@@ -87,7 +87,7 @@
       <!-- Botón de historial -->
       <div style="text-align: center; margin-top: 2rem;">
         <button type="button" class="button button--secondary" id="view-history-button" style="font-size: 0.9rem; padding: 0.5rem 1.2rem;">
-          📋 Ver mi historial de recibos
+          Ver mi historial de recibos
         </button>
       </div>
     </section>
@@ -120,11 +120,45 @@
       </article>
     </section>
 
+    <!-- ============ Reflexión Emocional (nueva pantalla) ============ -->
+    <section id="screen-emotional" class="screen" aria-labelledby="emotional-title" hidden>
+      <p class="kicker">Antes de ver tu recibo</p>
+      <h2 id="emotional-title" class="display display--small" tabindex="-1">¿Cómo te sientes?</h2>
+      <p class="lede">Has recorrido seis momentos de un día. Antes de ver el recibo, tómate un momento para pensar en cómo te sientes. No hay respuestas correctas: es tu experiencia.</p>
+
+      <form id="emotional-form">
+        <label for="emotional-input" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+          ¿Cómo te sientes después de este día?
+        </label>
+        <p class="fineprint" style="margin-bottom: 1rem;">
+          Escribe una palabra o una frase corta (máximo 100 caracteres). Ej: "agotado", "tranquilo", "con culpa", "agradecido".
+        </p>
+        <input 
+          type="text" 
+          id="emotional-input" 
+          name="emotional"
+          maxlength="100"
+          placeholder="Ej: agotado pero satisfecho"
+          style="width: 100%; padding: 1rem; font-size: 1.1rem; border: 2px solid var(--rule); border-radius: var(--radius); background: var(--card); color: var(--ink); outline: none;"
+        >
+        <div class="actions" style="margin-top: 1.5rem;">
+          <button type="submit" class="button button--primary" id="emotional-submit">Ver mi recibo</button>
+          <button type="button" class="button button--secondary" id="emotional-skip">Saltar este paso</button>
+        </div>
+      </form>
+    </section>
+
     <!-- ============ Recibo ============ -->
     <section id="screen-receipt" class="screen" aria-labelledby="receipt-title" hidden>
       <p class="kicker" id="receipt-scenario"></p>
       <h2 id="receipt-title" class="display display--small" tabindex="-1">Tu recibo invisible</h2>
       <p class="lede">Esto fue lo que costó llegar al final del día. No es una calificación: es una forma de poner a la vista lo que casi siempre se da por sentado.</p>
+
+      <!-- Estado emocional en el recibo -->
+      <div id="emotional-state-block" class="purpose-box" hidden style="margin: 1.5rem 0;">
+        <h3 class="purpose-box__title" style="font-size: 1rem;">Así te sentiste al final del día</h3>
+        <p id="emotional-state-text" style="font-family: var(--serif); font-size: 1.3rem; font-style: italic; margin: 0;"></p>
+      </div>
 
       <div class="receipt" id="receipt">
         <p class="receipt__head">Recibo invisible</p>
@@ -159,7 +193,7 @@
       <!-- Botón para descargar el recibo -->
       <div style="text-align: center; margin: 2rem 0;">
         <button type="button" class="button button--primary" id="download-pdf-button" style="background-color: #10B981; border-color: #10B981;">
-          📄 Descargar recibo en PDF
+          Descargar recibo en PDF
         </button>
       </div>
 

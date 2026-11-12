@@ -53,7 +53,6 @@ function validateStartSession(body) {
   ensureOnlyKeys(body, ['scenario', 'budget']);
   const scenario = parseSlug(body.scenario);
   
-  // El presupuesto es opcional. Si viene, debe ser un entero entre 5.000 y 500.000.
   let budget = null;
   if (body.budget !== undefined && body.budget !== null) {
     if (typeof body.budget !== 'number' || !Number.isInteger(body.budget)) {
@@ -76,9 +75,27 @@ function validateDecision(body) {
   };
 }
 
+/**
+ * Valida el body de una sesión completada.
+ * Permite el campo opcional `emotionalState` (un texto corto).
+ */
+function validateCompleteSession(body) {
+  ensureOnlyKeys(body, ['emotionalState']);
+  
+  let emotionalState = null;
+  if (body.emotionalState !== undefined && body.emotionalState !== null) {
+    if (typeof body.emotionalState !== 'string' || body.emotionalState.length > 200) {
+      throw bad('El estado emocional debe ser un texto de máximo 200 caracteres.');
+    }
+    emotionalState = body.emotionalState.trim();
+  }
+  
+  return { emotionalState };
+}
+
+// Mantengo validateEmpty por compatibilidad, pero ahora es alias de validateCompleteSession
 function validateEmpty(body) {
-  ensureOnlyKeys(body, []);
-  return {};
+  return validateCompleteSession(body);
 }
 
 module.exports = { 
@@ -86,5 +103,6 @@ module.exports = {
   parseSlug, 
   validateStartSession, 
   validateDecision, 
+  validateCompleteSession,
   validateEmpty 
 };

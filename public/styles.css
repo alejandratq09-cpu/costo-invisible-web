@@ -444,8 +444,57 @@ html { scroll-padding-top: 9.5rem; scroll-padding-bottom: 1.5rem; }
 .help p { margin: 0 0 .4rem; }
 .help ol { margin: 0; padding-left: 1.25rem; }
 
-/* ---------- Preferencias del usuario ---------- */
+/* ---------- Pantalla Emocional ---------- */
+#emotional-form {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: var(--paper-2);
+  border-radius: var(--radius);
+  border-left: 4px solid var(--accent);
+}
 
+#emotional-input {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  border: 2px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+  outline: none;
+  font-family: var(--sans);
+  box-sizing: border-box;
+}
+
+#emotional-input:focus {
+  border-color: var(--accent);
+}
+
+#emotional-state-block {
+  background: var(--paper-2);
+  border-left: 4px solid var(--accent);
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius);
+}
+
+#emotional-state-block h3 {
+  font-family: var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+}
+
+#emotional-state-text {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-style: italic;
+  margin: 0;
+  color: var(--ink);
+}
+
+/* ---------- Preferencias del usuario ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
 }

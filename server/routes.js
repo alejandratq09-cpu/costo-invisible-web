@@ -280,6 +280,7 @@ function resultToApi(row, scenario) {
     },
     visible,
     invisible,
+    emotionalState: row.emotional_state || null,
   };
 }
 
@@ -305,18 +306,21 @@ async function completeSession({ params, body }) {
     }
 
     const r = engine.buildResult(ctx.scenario, ctx.steps, ctx.state, ctx.session.current_money);
+    
+    // El estado emocional se envía desde el frontend (opcional)
+    const emotionalState = body.emotionalState || null;
 
     const saved = await client.query(
       `INSERT INTO session_results
          (session_id, final_money, final_time_minutes, final_energy, final_wellbeing,
           visible_total, income_total, time_spent_minutes, energy_spent, wellbeing_lost,
-          visible_summary, invisible_summary)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb)
+          visible_summary, invisible_summary, emotional_state)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb, $13)
        RETURNING *`,
       [
         sessionId, r.final_money, r.final_time_minutes, r.final_energy, r.final_wellbeing,
         r.visible_total, r.income_total, r.time_spent_minutes, r.energy_spent, r.wellbeing_lost,
-        JSON.stringify(r.visible_summary), JSON.stringify(r.invisible_summary),
+        JSON.stringify(r.visible_summary), JSON.stringify(r.invisible_summary), emotionalState,
       ],
     );
     await client.query(
