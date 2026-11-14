@@ -6,6 +6,11 @@
   <title>El costo invisible de llegar al final del día</title>
   <meta name="description" content="Una experiencia interactiva para reflexionar sobre lo que cuesta, además del dinero, cubrir las necesidades básicas de un día.">
   <meta name="color-scheme" content="light dark">
+  
+  <!-- Color de la barra del navegador en móviles -->
+  <meta name="theme-color" content="#f7f3ec" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#171512" media="(prefers-color-scheme: dark)">
+
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%239c3d1b'/%3E%3Cpath d='M9 22h14M9 16h14M9 10h8' stroke='%23fff' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/styles.css">
 </head>
@@ -24,6 +29,7 @@
     <div id="loading" class="loading-screen" role="status" aria-live="polite" hidden>
       <div class="spinner"></div>
       <p>Preparando tu recorrido...</p>
+      <p class="fineprint" id="loading-hint" style="margin-top: 1rem; opacity: 0; transition: opacity 0.5s;">El servidor está despertando. Esto puede tardar unos segundos.</p>
     </div>
 
     <!-- ============ PASO 1: Bienvenida ============ -->
@@ -204,8 +210,6 @@
         </section>
       </div>
 
-      <!-- Botón de PDF eliminado de aquí -->
-
       <section class="reflection" aria-labelledby="reflection-title">
         <h3 id="reflection-title" class="reflection__title">Una última idea</h3>
         <p id="reflection-text"></p>
@@ -251,6 +255,5 @@
   </footer>
   <div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
   <script src="/app.js"></script>
-  <!-- Librerías de PDF eliminadas -->
 </body>
 </html>

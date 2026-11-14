@@ -319,7 +319,16 @@ html { scroll-padding-top: 9.5rem; scroll-padding-bottom: 1.5rem; }
   transition: width .6s cubic-bezier(.2, .7, .2, 1);
 }
 
-.meters--receipt { grid-template-columns: repeat(2, 1fr); gap: 1rem 1.5rem; }
+/* Ajuste para medidores del recibo en móviles pequeños */
+.meters--receipt { 
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 1rem 1.5rem; 
+}
+@media (max-width: 480px) {
+  .meters--receipt {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* ---------- Opciones ---------- */
 

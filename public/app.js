@@ -149,7 +149,7 @@
     const isSession = SESSION_CODES.has(code);
     let title = 'Algo falló';
     if (code === 'network') title = 'No pudimos hablar con el servidor';
-    else if (DB_CODES.has(code)) title = 'No pudimos conectar con la base de datos';
+    else if (DB_CODES.has(code)) title = 'No pudimos cargar los escenarios';
     else if (isSession) title = 'Esta experiencia ya no está disponible';
 
     $('#error-title').textContent = title;
@@ -789,11 +789,18 @@
   async function init() {
     $('#loading').hidden = false;
     for (const id of SCREENS) $(`#screen-${id}`).hidden = true;
+
+    // Si tarda más de 3 segundos, mostramos el aviso de que el servidor está despertando
+    const hint = $('#loading-hint');
+    if (hint) {
+      hint.style.opacity = '0';
+      setTimeout(() => { hint.style.opacity = '1'; }, 3000);
+    }
+
     try {
       const data = await api('GET', '/api/scenarios');
       if (!data.scenarios || data.scenarios.length === 0) {
-        throw new ApiError(0, 'no_scenarios',
-          'La base de datos está conectada, pero no tiene escenarios activos.');
+        throw new ApiError(0, 'no_scenarios', 'No encontramos escenarios disponibles en este momento. Por favor, intenta más tarde.');
       }
       app.scenarios = data.scenarios;
       showScreen('welcome'); // Inicia en la bienvenida
