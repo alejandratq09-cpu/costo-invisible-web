@@ -70,7 +70,7 @@
       });
     } catch {
       throw new ApiError(0, 'network',
-        'No pudimos comunicarnos con el servidor de la aplicación. Comprueba que esté en marcha (npm start) y que tu conexión funcione.');
+        'No pudimos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo.');
     }
     let data = null;
     try { data = await response.json(); } catch { /* respuesta sin JSON */ }
@@ -93,10 +93,12 @@
 
   // Reflexiones asociadas a cada emoción
   const EMOTIONAL_REFLECTIONS = {
-    alegria: 'La alegría de hoy es un recordatorio de que, incluso en días difíciles, hay momentos que valen la pena. Esa emoción es tuya y nadie te la puede quitar.',
-    tristeza: 'La tristeza también es parte del día. No hay que esconderla: reconocerla es el primer paso para cuidarte. Mañana será otro día, y estarás ahí para vivirlo.',
-    ansiedad: 'La ansiedad aparece cuando el día se siente más grande que nosotras. Respira. No tienes que resolver todo hoy. Un paso a la vez es suficiente.',
-    calma: 'La calma no significa que todo esté resuelto, sino que encontraste un momento de paz en medio del día. Eso también es un logro.',
+    alegria: 'La alegría de hoy es un recordatorio de que, incluso en días difíciles, hay momentos que valen la pena.',
+    calma: 'La calma no significa que todo esté resuelto, sino que encontraste un momento de paz en medio del día.',
+    cansancio: 'El cansancio es una señal de todo lo que diste hoy. No es debilidad, es el peso real de haber sostenido el día.',
+    tristeza: 'La tristeza también es parte del día. Reconocerla es el primer paso para cuidarte.',
+    ansiedad: 'La ansiedad aparece cuando el día se siente más grande que nosotras. Respira. No tienes que resolver todo hoy.',
+    no_se: 'A veces no hay una palabra exacta para lo que sentimos. Está bien no saberlo; lo importante es que te diste el espacio de preguntártelo.',
   };
 
   const app = {
@@ -111,13 +113,16 @@
     state: null,
     busy: false,
     retry: null,
+    selectedScenarioSlug: null,
   };
 
   // ------------------------------------------------------------ pantallas
 
-  const SCREENS = ['intro', 'moment', 'emotional', 'receipt', 'error', 'history'];
+  const SCREENS = ['welcome', 'scenario', 'budget', 'moment', 'emotional', 'receipt', 'error', 'history'];
   const HEADINGS = { 
-    intro: '#intro-title', 
+    welcome: '#welcome-title', 
+    scenario: '#scenario-title', 
+    budget: '#budget-title', 
     moment: '#moment-title', 
     emotional: '#emotional-title', 
     receipt: '#receipt-title', 
@@ -149,7 +154,6 @@
 
     $('#error-title').textContent = title;
     $('#error-message').textContent = err.message || 'Ocurrió un error inesperado.';
-    $('#error-help').hidden = !(DB_CODES.has(code) && code !== 'network');
     $('#retry-button').hidden = isSession;
     $('#restart-button').hidden = !isSession;
     app.retry = retry || null;
@@ -276,22 +280,24 @@
     }
   }
 
-  // ------------------------------------------------------------ inicio
+  // ------------------------------------------------------------ flujo por pasos (Paso 2)
 
-  function renderIntro() {
+  function renderScenarioStep() {
     const list = $('#scenario-list');
     list.replaceChildren();
 
     const fallback = app.scenarios.find((s) => !app.played.has(s.slug)) || app.scenarios[0];
     const selected = app.scenarios.find((s) => s.slug === app.preselect) || fallback;
+    app.selectedScenarioSlug = selected.slug;
 
     for (const scenario of app.scenarios) {
       const base = `sc-${scenario.slug}`;
       const radio = el('input', {
         type: 'radio', name: 'scenario', id: base, value: scenario.slug,
-        'aria-labelledby': `${base}-title`, 'aria-describedby': `${base}-desc ${base}-start`,
         checked: scenario.slug === selected.slug,
       });
+      radio.addEventListener('change', () => { app.selectedScenarioSlug = scenario.slug; });
+      
       const start = scenario.start;
       list.append(
         el('label', { class: 'scenario', for: base },
@@ -305,13 +311,9 @@
             `energía ${start.energy} y bienestar ${start.wellbeing}.`)),
       );
     }
-
-    const button = $('#start-button');
-    button.disabled = false;
-    button.textContent = 'Comenzar el día';
-    showScreen('intro');
+    showScreen('scenario');
   }
-  
+
   async function loadIntroStats() {
     try {
       const stats = await api('GET', '/api/stats?scenario=dia-con-horario-fijo');
@@ -327,25 +329,24 @@
     }
   }
 
+  // ------------------------------------------------------------ iniciar partida
+
   async function startExperience(slug) {
     const button = $('#start-button');
     button.disabled = true;
     button.textContent = 'Preparando tu día…';
     try {
-      const userName = $('#user-name').value.trim();
-      const userAge = parseInt($('#user-age').value, 10);
-      const userCity = $('#user-city').value.trim();
-
-      if (!userName || !userAge || !userCity) {
-        throw new ApiError(0, 'invalid_registration', 'Por favor completa todos los campos del registro.');
+      const userAlias = $('#user-alias') ? $('#user-alias').value.trim() : '';
+      if (userAlias) {
+        try { localStorage.setItem('costo-invisible-alias', userAlias); } catch {}
       }
 
       const budgetInput = $('#budget-input');
       let customBudget = null;
       if (budgetInput) {
         customBudget = parseInt(budgetInput.value, 10);
-        if (isNaN(customBudget) || customBudget < 5000 || customBudget > 500000) {
-          throw new ApiError(0, 'invalid_budget', 'El presupuesto debe estar entre $5.000 y $500.000.');
+        if (isNaN(customBudget) || customBudget < 5000 || customBudget > 200000) {
+          throw new ApiError(0, 'invalid_budget', 'El presupuesto debe estar entre $5.000 y $200.000.');
         }
       }
 
@@ -354,9 +355,6 @@
         api('POST', '/api/sessions', { 
           scenario: slug, 
           budget: customBudget,
-          userName,
-          userAge,
-          userCity,
         }),
       ]);
       if (full.moments.length !== session.totalMoments) {
@@ -374,7 +372,7 @@
     } catch (err) {
       button.disabled = false;
       button.textContent = 'Comenzar el día';
-      showError(err, () => renderIntro());
+      showError(err, () => showScreen('budget'));
     }
   }
 
@@ -656,24 +654,6 @@
     $('#stats-block').open = false;
     $('#stats-content').replaceChildren(el('p', { class: 'stats__note', text: 'Cargando estadísticas…' }));
 
-    const receiptSection = $('#screen-receipt');
-    const existingBtn = $('#play-again-button');
-    if (!existingBtn) {
-      const playAgainContainer = el('div', { style: 'text-align: center; margin-top: 2rem; padding-bottom: 2rem;' },
-        el('button', { 
-          id: 'play-again-button', 
-          class: 'button button--primary', 
-          type: 'button',
-          style: 'font-size: 1.1rem; padding: 0.8rem 2rem; cursor: pointer;'
-        }, 'Jugar de nuevo')
-      );
-      receiptSection.append(playAgainContainer);
-      
-      $('#play-again-button').addEventListener('click', () => {
-        window.location.reload();
-      });
-    }
-
     showScreen('receipt');
     announce('Tu recibo invisible está listo.');
     loadStats(result.scenario.slug, currency);
@@ -716,10 +696,25 @@
 
   // ------------------------------------------------------------ eventos
 
-  $('#start-form').addEventListener('submit', (event) => {
+  // Paso 1: Bienvenida -> Escenario
+  $('#welcome-button').addEventListener('click', () => {
+    renderScenarioStep();
+  });
+
+  // Paso 2: Escenario -> Presupuesto
+  $('#scenario-form').addEventListener('submit', (event) => {
     event.preventDefault();
     const checked = document.querySelector('input[name="scenario"]:checked');
-    if (checked) startExperience(checked.value);
+    if (checked) {
+      app.selectedScenarioSlug = checked.value;
+      showScreen('budget');
+    }
+  });
+
+  // Paso 3: Presupuesto -> Juego
+  $('#budget-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (app.selectedScenarioSlug) startExperience(app.selectedScenarioSlug);
   });
 
   $('#next-button').addEventListener('click', onNext);
@@ -729,7 +724,7 @@
     const candidates = app.scenarios.filter((s) => s.slug !== current);
     const unplayed = candidates.find((s) => !app.played.has(s.slug));
     app.preselect = (unplayed || candidates[0] || app.scenarios[0]).slug;
-    renderIntro();
+    renderScenarioStep(); // Volvemos al paso 2
   });
 
   $('#repeat-button').addEventListener('click', () => {
@@ -743,7 +738,7 @@
 
   $('#restart-button').addEventListener('click', () => {
     app.preselect = app.scenario ? app.scenario.slug : null;
-    renderIntro();
+    renderScenarioStep();
   });
 
   // Formulario emocional
@@ -768,7 +763,7 @@
   });
 
   $('#close-history-button').addEventListener('click', () => {
-    renderIntro();
+    showScreen('welcome'); // Vuelve a la bienvenida
   });
 
   $('#clear-history-button').addEventListener('click', () => {
@@ -798,10 +793,10 @@
       const data = await api('GET', '/api/scenarios');
       if (!data.scenarios || data.scenarios.length === 0) {
         throw new ApiError(0, 'no_scenarios',
-          'La base de datos está conectada, pero no tiene escenarios activos. Ejecuta "npm run db:init" para cargar los datos iniciales.');
+          'La base de datos está conectada, pero no tiene escenarios activos.');
       }
       app.scenarios = data.scenarios;
-      renderIntro();
+      showScreen('welcome'); // Inicia en la bienvenida
       loadIntroStats();
     } catch (err) {
       showError(err, init);

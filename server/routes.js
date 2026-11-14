@@ -106,7 +106,8 @@ async function getScenario({ params }) {
 // ---------------------------------------------------------------- sesiones
 
 async function startSession({ body }) {
-  const { scenario: slug, budget, userName, userAge, userCity } = v.validateStartSession(body);
+  // Ya no recibimos userName, userAge ni userCity. Solo escenario y presupuesto.
+  const { scenario: slug, budget } = v.validateStartSession(body);
 
   return db.withTransaction(async (client) => {
     const scenario = await findActiveScenario(client, slug);
@@ -114,11 +115,14 @@ async function startSession({ body }) {
     if (count.rows[0].n === 0) {
       throw new AppError(409, 'scenario_empty', 'Este escenario todavía no tiene momentos.');
     }
+    
+    // Insertamos solo lo necesario
     const inserted = await client.query(
-      `INSERT INTO sessions (scenario_id, current_money, user_name, user_age, user_city) 
-       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [scenario.id, budget !== null ? budget : null, userName, userAge, userCity],
+      `INSERT INTO sessions (scenario_id, current_money) 
+       VALUES ($1, $2) RETURNING id`,
+      [scenario.id, budget !== null ? budget : null],
     );
+    
     return {
       status: 201,
       body: {
@@ -132,8 +136,9 @@ async function startSession({ body }) {
 }
 
 async function loadSessionForUpdate(client, sessionId) {
+  // Optimización: Ya no traemos columnas de datos personales
   const session = await client.query(
-    'SELECT id, scenario_id, status, current_money, user_name, user_age, user_city FROM sessions WHERE id = $1 FOR UPDATE',
+    'SELECT id, scenario_id, status, current_money FROM sessions WHERE id = $1 FOR UPDATE',
     [sessionId],
   );
   if (session.rows.length === 0) {

@@ -2,11 +2,11 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>El costo invisible de llegar al final del día</title>
   <meta name="description" content="Una experiencia interactiva para reflexionar sobre lo que cuesta, además del dinero, cubrir las necesidades básicas de un día.">
   <meta name="color-scheme" content="light dark">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cnn fkvrect width='32' height='32' rx='6' fill='%239c3d1b'/%3E%3Cpath d='M9 22h14M9 16h14M9 10h8' stroke='%23fff' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%239c3d1b'/%3E%3Cpath d='M9 22h14M9 16h14M9 10h8' stroke='%23fff' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -17,68 +17,71 @@
   </header>
 
   <main id="main" class="page">
-
     <noscript>
       <p class="notice">Esta experiencia necesita JavaScript para funcionar. Actívalo en tu navegador y vuelve a cargar la página.</p>
     </noscript>
 
-    <!-- Pantalla de carga animada (para Render) -->
-    <div id="loading" class="loading-screen" role="status" aria-live="polite">
+    <div id="loading" class="loading-screen" role="status" aria-live="polite" hidden>
       <div class="spinner"></div>
-      <p>Despertando el servidor...</p>
-      <p class="fineprint">Esto puede tardar hasta un minuto si la página llevaba mucho tiempo inactiva.</p>
+      <p>Preparando tu recorrido...</p>
     </div>
 
-    <!-- ============ Inicio ============ -->
-    <section id="screen-intro" class="screen" aria-labelledby="intro-title" hidden>
+    <!-- ============ PASO 1: Bienvenida ============ -->
+    <section id="screen-welcome" class="screen" aria-labelledby="welcome-title" hidden>
       <p class="kicker">Una experiencia para pensar</p>
-      <h1 id="intro-title" class="display" tabindex="-1">El costo invisible de llegar al final del día</h1>
+      <h1 id="welcome-title" class="display" tabindex="-1">El costo invisible de llegar al final del día</h1>
       <p class="lede">Un día cualquiera está hecho de decisiones que parecen pequeñas: cómo salir de casa, qué comer, cómo moverse, qué hacer con el cansancio. Cada una cuesta dinero, pero también tiempo, energía y bienestar.</p>
       <p>Vas a recorrer seis momentos de un día. En cada uno verás dos o tres opciones y tendrás que elegir solo una, lo que cambiará cuatro indicadores. No hay respuestas correctas, no hay puntaje y nadie gana ni pierde: al final recibirás un <strong>recibo invisible</strong> con todo lo que costó llegar hasta ahí.</p>
+      
+      <button type="button" class="button button--primary" id="welcome-button" style="width: 100%; margin-top: 2rem; font-size: 1.1rem; padding: 1rem;">
+        Comenzar
+      </button>
 
-      <form id="start-form" class="start-form">
-        <!-- Registro obligatorio -->
-        <fieldset class="registration-picker">
-          <legend>Regístrate para comenzar</legend>
-          <p class="fineprint" style="margin-bottom: 1rem;">Tus datos son anónimos y solo se usan para este ejercicio.</p>
-          <div class="registration-field">
-            <label for="user-name">Nombre o alias</label>
-            <input type="text" id="user-name" name="userName" maxlength="80" required placeholder="Ej: Aleja">
-          </div>
-          <div class="registration-field">
-            <label for="user-age">Edad</label>
-            <input type="number" id="user-age" name="userAge" min="1" max="120" required placeholder="Ej: 22">
-          </div>
-          <div class="registration-field">
-            <label for="user-city">Ciudad</label>
-            <input type="text" id="user-city" name="userCity" maxlength="100" required placeholder="Ej: Bogotá">
-          </div>
-        </fieldset>
+      <p id="intro-stats" class="fineprint" hidden style="text-align: center; margin-top: 2rem;"></p>
+      <div style="text-align: center; margin-top: 2rem;">
+        <button type="button" class="button button--secondary" id="view-history-button" style="font-size: 0.9rem; padding: 0.5rem 1.2rem;">
+          Ver mi historial de recibos
+        </button>
+      </div>
+    </section>
 
-        <fieldset class="scenario-picker">
-          <legend>Elige el día que quieres recorrer</legend>
+    <!-- ============ PASO 2: Elegir Escenario ============ -->
+    <section id="screen-scenario" class="screen" aria-labelledby="scenario-title" hidden>
+      <p class="kicker">Paso 1 de 2</p>
+      <h2 id="scenario-title" class="display display--small" tabindex="-1">Elige el día que quieres recorrer</h2>
+      
+      <form id="scenario-form" style="margin-top: 2rem;">
+        <fieldset class="scenario-picker" style="border: none; padding: 0; margin: 0;">
           <div id="scenario-list" class="scenario-list"></div>
         </fieldset>
+        <button type="submit" class="button button--primary" id="scenario-next-button" style="width: 100%; margin-top: 2rem; font-size: 1.1rem; padding: 1rem;">
+          Continuar
+        </button>
+      </form>
+    </section>
 
-        <!-- Selector de presupuesto personalizado -->
+    <!-- ============ PASO 3: Presupuesto ============ -->
+    <section id="screen-budget" class="screen" aria-labelledby="budget-title" hidden>
+      <p class="kicker">Paso 2 de 2</p>
+      <h2 id="budget-title" class="display display--small" tabindex="-1">Tu presupuesto</h2>
+      
+      <form id="budget-form" style="margin-top: 2rem;">
         <div class="budget-picker">
-          <label for="budget-input" class="budget-picker__label">
-            Tu presupuesto para hoy
+          <label for="budget-input" class="budget-picker__label" style="font-size: 1.1rem; font-weight: 600;">
+            ¿Con cuánto dinero empiezas hoy?
           </label>
-          <p class="budget-picker__hint">
-            Ajusta con cuánto dinero quieres empezar el día. El escenario se adaptará a tu presupuesto.
-          </p>
-          <div class="budget-picker__input-group">
+          <div class="budget-picker__input-group" style="margin-top: 1rem;">
             <span class="budget-picker__currency">$</span>
             <input 
               type="number" 
               id="budget-input" 
               name="budget" 
               min="5000" 
-              max="500000" 
+              max="200000" 
               step="1000" 
               value="40000"
               class="budget-picker__number"
+              inputmode="numeric"
             >
             <span class="budget-picker__unit">COP</span>
           </div>
@@ -96,18 +99,16 @@
           </p>
         </div>
 
-        <button type="submit" class="button button--primary" id="start-button">Comenzar el día</button>
-      </form>
+        <div class="registration-field" style="margin-top: 2rem;">
+          <label for="user-alias">¿Cómo quieres que te llame? (Opcional)</label>
+          <input type="text" id="user-alias" name="userAlias" maxlength="30" placeholder="Tu nombre o un apodo" autocomplete="nickname" style="font-size: 16px;">
+          <p class="fineprint" style="margin-top: 0.5rem;">Este dato se queda en tu dispositivo y solo se usa para saludarte aquí.</p>
+        </div>
 
-      <p id="intro-stats" class="fineprint" hidden></p>
-      <p class="fineprint">La experiencia es anónima: no pedimos correo ni ningún dato personal. Solo se guardan las opciones elegidas, sin identificarte, para mostrar estadísticas agregadas.</p>
-      
-      <!-- Botón de historial -->
-      <div style="text-align: center; margin-top: 2rem;">
-        <button type="button" class="button button--secondary" id="view-history-button" style="font-size: 0.9rem; padding: 0.5rem 1.2rem;">
-          Ver mi historial de recibos
+        <button type="submit" class="button button--primary" id="start-button" style="width: 100%; margin-top: 2rem; font-size: 1.1rem; padding: 1rem;">
+          Comenzar el día
         </button>
-      </div>
+      </form>
     </section>
 
     <!-- ============ Momento ============ -->
@@ -131,7 +132,7 @@
           <h3 id="consequence-title" class="consequence__title" tabindex="-1">Lo que pasó</h3>
           <p id="consequence-text" class="consequence__text"></p>
           <ul id="consequence-effects" class="effects" aria-label="Cambios en tus indicadores"></ul>
-          <button type="button" class="button button--primary" id="next-button"></button>
+          <button type="button" class="button button--primary" id="next-button" style="width: 100%;"></button>
         </div>
 
         <p id="moment-error" class="inline-error" role="alert" hidden></p>
@@ -148,28 +149,18 @@
         <fieldset class="emotion-picker">
           <legend>Elige la emoción que más te represente</legend>
           <div class="emotion-list">
-            <label class="emotion-option">
-              <input type="radio" name="emotion" value="alegria" required>
-              <span class="emotion-option__text">Alegría</span>
-            </label>
-            <label class="emotion-option">
-              <input type="radio" name="emotion" value="tristeza">
-              <span class="emotion-option__text">Tristeza</span>
-            </label>
-            <label class="emotion-option">
-              <input type="radio" name="emotion" value="ansiedad">
-              <span class="emotion-option__text">Ansiedad</span>
-            </label>
-            <label class="emotion-option">
-              <input type="radio" name="emotion" value="calma">
-              <span class="emotion-option__text">Calma</span>
-            </label>
+            <label class="emotion-card"><input type="radio" name="emotion" value="alegria" required><span class="emotion-card__text">Alegría</span></label>
+            <label class="emotion-card"><input type="radio" name="emotion" value="calma"><span class="emotion-card__text">Calma</span></label>
+            <label class="emotion-card"><input type="radio" name="emotion" value="cansancio"><span class="emotion-card__text">Cansancio</span></label>
+            <label class="emotion-card"><input type="radio" name="emotion" value="tristeza"><span class="emotion-card__text">Tristeza</span></label>
+            <label class="emotion-card"><input type="radio" name="emotion" value="ansiedad"><span class="emotion-card__text">Ansiedad</span></label>
+            <label class="emotion-card"><input type="radio" name="emotion" value="no_se"><span class="emotion-card__text">No sabría decirlo</span></label>
           </div>
         </fieldset>
 
-        <div class="actions" style="margin-top: 1.5rem;">
-          <button type="submit" class="button button--primary" id="emotional-submit">Ver mi recibo</button>
-          <button type="button" class="button button--secondary" id="emotional-skip">Saltar este paso</button>
+        <div class="actions" style="margin-top: 2rem; flex-direction: column;">
+          <button type="submit" class="button button--primary" id="emotional-submit" style="width: 100%;">Ver mi recibo</button>
+          <button type="button" class="button button--secondary" id="emotional-skip" style="width: 100%;">Saltar este paso</button>
         </div>
       </form>
     </section>
@@ -180,7 +171,6 @@
       <h2 id="receipt-title" class="display display--small" tabindex="-1">Tu recibo invisible</h2>
       <p class="lede">Esto fue lo que costó llegar al final del día. No es una calificación: es una forma de poner a la vista lo que casi siempre se da por sentado.</p>
 
-      <!-- Estado emocional en el recibo -->
       <div id="emotional-state-block" class="purpose-box" hidden style="margin: 1.5rem 0;">
         <h3 class="purpose-box__title" style="font-size: 1rem;">Así te sentiste al final del día</h3>
         <p id="emotional-state-text" style="font-family: var(--serif); font-size: 1.3rem; font-style: italic; margin: 0 0 0.5rem;"></p>
@@ -189,7 +179,6 @@
 
       <div class="receipt" id="receipt">
         <p class="receipt__head">Recibo invisible</p>
-
         <section class="receipt__section" aria-labelledby="visible-title">
           <h3 id="visible-title" class="receipt__title">Costos visibles</h3>
           <p class="receipt__hint">Dinero gastado en necesidades.</p>
@@ -200,7 +189,6 @@
             <p class="receipt__total receipt__total--soft"><span>Ingresos del día</span><span id="income-total"></span></p>
           </div>
         </section>
-
         <section class="receipt__section" aria-labelledby="invisible-title">
           <h3 id="invisible-title" class="receipt__title">Costos invisibles</h3>
           <p class="receipt__hint">Tiempo, energía, descanso y bienestar que se fueron en el camino.</p>
@@ -210,19 +198,13 @@
             <ul id="notes-list" class="notes"></ul>
           </div>
         </section>
-
         <section class="receipt__section" aria-labelledby="end-title">
           <h3 id="end-title" class="receipt__title">Así terminó el día</h3>
           <div id="meters-final" class="meters meters--receipt" role="group" aria-label="Indicadores al final del día"></div>
         </section>
       </div>
 
-      <!-- Botón para descargar el recibo -->
-      <div style="text-align: center; margin: 2rem 0;">
-        <button type="button" class="button button--primary" id="download-pdf-button" style="background-color: #10B981; border-color: #10B981;">
-          Descargar recibo en PDF
-        </button>
-      </div>
+      <!-- Botón de PDF eliminado de aquí -->
 
       <section class="reflection" aria-labelledby="reflection-title">
         <h3 id="reflection-title" class="reflection__title">Una última idea</h3>
@@ -245,10 +227,8 @@
       <p class="kicker">Tus recorridos anteriores</p>
       <h2 id="history-title" class="display display--small" tabindex="-1">Mi historial</h2>
       <p class="lede">Aquí están los recibos de tus recorridos guardados en este navegador. Son anónimos y solo se guardan en tu dispositivo.</p>
-      
       <div id="history-list" class="history-list"></div>
-      
-      <div class="actions">
+      <div class="actions" style="margin-top: 2rem;">
         <button type="button" class="button button--primary" id="close-history-button">Volver al inicio</button>
         <button type="button" class="button button--secondary" id="clear-history-button">Borrar historial</button>
       </div>
@@ -259,32 +239,18 @@
       <p class="kicker">Algo no salió como esperábamos</p>
       <h2 id="error-title" class="headline" tabindex="-1"></h2>
       <p id="error-message" class="lede"></p>
-      <div id="error-help" class="help" hidden>
-        <p><strong>Qué revisar</strong></p>
-        <ol>
-          <li>Que PostgreSQL esté encendido y acepte conexiones.</li>
-          <li>Que el archivo <code>.env</code> exista y tenga una <code>DATABASE_URL</code> correcta.</li>
-          <li>Que hayas ejecutado <code>npm run db:init</code> para crear las tablas.</li>
-          <li>Después, reinicia el servidor con <code>npm start</code> y pulsa «Reintentar».</li>
-        </ol>
-      </div>
       <div class="actions">
         <button type="button" class="button button--primary" id="retry-button">Reintentar</button>
         <button type="button" class="button button--secondary" id="restart-button" hidden>Empezar de nuevo</button>
       </div>
     </section>
-
   </main>
 
   <footer class="site-footer">
     <p>Una experiencia anónima. Las situaciones son ilustrativas: no representan a ninguna persona real ni sustituyen la experiencia de quien vive estas decisiones a diario.</p>
   </footer>
-
   <div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
-
   <script src="/app.js"></script>
-  <!-- Librerías para generar el PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Librerías de PDF eliminadas -->
 </body>
 </html>

@@ -9,9 +9,9 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MAX_INT = 2147483647; // límite de INTEGER en PostgreSQL
 
-// Rango permitido para el presupuesto personalizado
+// Rango permitido para el presupuesto personalizado (Sincronizado con el Frontend)
 const MIN_BUDGET = 5000;
-const MAX_BUDGET = 500000;
+const MAX_BUDGET = 200000;
 
 function bad(message) {
   return new AppError(400, 'validation_error', message);
@@ -50,10 +50,13 @@ function ensureOnlyKeys(body, allowed) {
 }
 
 /**
- * Valida los datos del registro y el presupuesto al iniciar una sesión.
+ * Valida los datos para iniciar una sesión.
+ * NOTA: Los datos personales (nombre, edad, ciudad) fueron eliminados por privacidad.
+ * Ya no se aceptan ni se esperan en el servidor.
  */
 function validateStartSession(body) {
-  ensureOnlyKeys(body, ['scenario', 'budget', 'userName', 'userAge', 'userCity']);
+  // Ya no permitimos userName, userAge ni userCity
+  ensureOnlyKeys(body, ['scenario', 'budget']);
   const scenario = parseSlug(body.scenario);
   
   let budget = null;
@@ -67,32 +70,7 @@ function validateStartSession(body) {
     budget = body.budget;
   }
 
-  // Validar registro (opcional)
-  let userName = null;
-  if (body.userName !== undefined && body.userName !== null) {
-    if (typeof body.userName !== 'string' || body.userName.trim().length === 0 || body.userName.length > 80) {
-      throw bad('El nombre debe ser un texto de entre 1 y 80 caracteres.');
-    }
-    userName = body.userName.trim();
-  }
-
-  let userAge = null;
-  if (body.userAge !== undefined && body.userAge !== null) {
-    if (typeof body.userAge !== 'number' || !Number.isInteger(body.userAge) || body.userAge < 1 || body.userAge > 120) {
-      throw bad('La edad debe ser un número entero entre 1 y 120.');
-    }
-    userAge = body.userAge;
-  }
-
-  let userCity = null;
-  if (body.userCity !== undefined && body.userCity !== null) {
-    if (typeof body.userCity !== 'string' || body.userCity.trim().length === 0 || body.userCity.length > 100) {
-      throw bad('La ciudad debe ser un texto de entre 1 y 100 caracteres.');
-    }
-    userCity = body.userCity.trim();
-  }
-
-  return { scenario, budget, userName, userAge, userCity };
+  return { scenario, budget };
 }
 
 function validateDecision(body) {

@@ -204,39 +204,6 @@ code {
 
 .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
 
-#play-again-button {
-  background: var(--accent);
-  color: var(--accent-ink);
-  border: none;
-  border-radius: 999px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  box-shadow: 0 4px 14px rgba(156, 61, 27, 0.4);
-  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
-}
-#play-again-button:hover {
-  background: var(--accent-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(156, 61, 27, 0.6);
-}
-
-#undo-button {
-  background: transparent;
-  color: var(--ink-soft);
-  border: 2px solid var(--rule);
-  border-radius: 999px;
-  font-size: 0.85rem;
-  padding: 0.4rem 1rem;
-  margin-top: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-#undo-button:hover {
-  border-color: var(--ink-soft);
-  color: var(--ink);
-}
-
 /* ---------- Registro ---------- */
 .registration-picker {
   border: 0;
@@ -491,40 +458,50 @@ html { scroll-padding-top: 9.5rem; scroll-padding-bottom: 1.5rem; }
 }
 .emotion-list {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
 }
-.emotion-option {
+@media (max-width: 480px) {
+  .emotion-list {
+    grid-template-columns: 1fr;
+  }
+}
+.emotion-card {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: center;
+  min-height: 56px;
   padding: 1rem;
   background: var(--card);
   border: 2px solid var(--rule);
   border-radius: var(--radius);
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: all 0.2s ease;
 }
-.emotion-option:hover {
-  border-color: var(--ink-soft);
-}
-.emotion-option input:checked + .emotion-option__text {
-  font-weight: 700;
-  color: var(--accent);
-}
-.emotion-option:has(input:checked) {
+.emotion-card:hover {
   border-color: var(--accent);
   background: var(--paper-2);
 }
-.emotion-option input {
-  width: 1.2rem;
-  height: 1.2rem;
-  margin: 0;
-  accent-color: var(--accent);
+/* Ocultar el circulito del radio button */
+.emotion-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
-.emotion-option__text {
+.emotion-card__text {
   font-weight: 600;
   font-size: 1rem;
+}
+/* Estado seleccionado */
+.emotion-card:has(input:checked) {
+  border-color: var(--accent);
+  background: rgba(156, 61, 27, 0.1);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.emotion-card:has(input:checked) .emotion-card__text {
+  color: var(--accent);
 }
 
 /* ---------- Preferencias del usuario ---------- */
