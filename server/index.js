@@ -5,7 +5,6 @@ require('./env');
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const { exec } = require('node:child_process'); // <-- NUEVO
 
 const db = require('./db');
 const routes = require('./routes');
@@ -28,19 +27,6 @@ const ROUTES = [
   { method: 'DELETE', pattern: /^\/api\/sessions\/([^/]+)\/last-decision$/, keys: ['id'], handler: routes.undoLastDecision },
   { method: 'POST', pattern: /^\/api\/sessions\/([^/]+)\/complete$/, keys: ['id'], handler: routes.completeSession, body: true },
   { method: 'GET', pattern: /^\/api\/stats$/, handler: routes.getStats },
-  
-  // --- NUEVA RUTA PARA INICIALIZAR LA BASE DE DATOS DESDE RENDER ---
-  { method: 'GET', pattern: /^\/setup-db$/, handler: async () => {
-      return new Promise((resolve) => {
-        exec('npm run db:init', (error, stdout, stderr) => {
-          if (error) {
-            resolve({ status: 500, body: `<h2>Error</h2><pre>${error.message}</pre><pre>${stderr}</pre>`, isHtml: true });
-          } else {
-            resolve({ status: 200, body: `<h2>¡Éxito! Base de datos inicializada.</h2><pre>${stdout}</pre>`, isHtml: true });
-          }
-        });
-      });
-  }},
 ];
 
 // ------------------------------------------------------------------ utilidades HTTP
@@ -64,16 +50,6 @@ function sendJson(res, status, body) {
     'Cache-Control': 'no-store',
   });
   res.end(payload);
-}
-
-// --- NUEVA FUNCIÓN PARA ENVIAR EL HTML DE LA RUTA SETUP-DB ---
-function sendHtml(res, status, body) {
-  res.writeHead(status, {
-    ...SECURITY_HEADERS,
-    'Content-Type': 'text/html; charset=utf-8',
-    'Content-Length': Buffer.byteLength(body),
-  });
-  res.end(body);
 }
 
 function sendError(res, err) {
@@ -168,12 +144,6 @@ async function handleApi(req, res, url) {
     });
     const body = route.body ? await readJsonBody(req) : undefined;
     const result = await route.handler({ params, query: url.searchParams, body });
-    
-    // --- MODIFICACIÓN PARA DETECTAR SI LA RESPUESTA ES HTML ---
-    if (result.isHtml) {
-      return sendHtml(res, result.status, result.body);
-    }
-
     return sendJson(res, result.status, result.body);
   }
 
@@ -246,8 +216,7 @@ const server = http.createServer(async (req, res) => {
   });
 
   try {
-    // --- MODIFICACIÓN PARA QUE /setup-db PASE POR EL MANEJADOR DE RUTAS ---
-    if (url.pathname.startsWith('/api/') || url.pathname === '/setup-db') {
+    if (url.pathname.startsWith('/api/')) {
       await handleApi(req, res, url);
     } else {
       serveStatic(req, res, url);
