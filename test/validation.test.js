@@ -33,7 +33,7 @@ test('la decisión exige enteros positivos y rechaza campos extra', () => {
 });
 
 test('iniciar sesión solo acepta { scenario }', () => {
-  assert.deepEqual(v.validateStartSession({ scenario: 'dia-sin-empleo-fijo' }), { scenario: 'dia-sin-empleo-fijo' });
+  assert.deepEqual(v.validateStartSession({ scenario: 'dia-sin-empleo-fijo' }), { scenario: 'dia-sin-empleo-fijo', budget: null });
   rejects(() => v.validateStartSession({ scenario: 'a', name: 'María' }));
   rejects(() => v.validateStartSession({}));
 });
