@@ -15,7 +15,7 @@
 - **Dar voz a quienes lo viven:** Que las personas que enfrentan estas decisiones se sientan vistas y representadas.
 - **Educar sin juzgar:** No hay respuestas correctas, solo un recibo que te muestra el costo real de tus elecciones.
 
-La experiencia es **anónima**. Los datos que se recogen (de forma agregada) sirven para mostrar cómo decide la gente en situaciones de recursos limitados.
+La experiencia es **100% anónima**. No se recolectan datos personales (como nombre real, edad o ciudad). Los datos que se recogen (de forma agregada) sirven para mostrar cómo decide la gente en situaciones de recursos limitados.
 
 ## 🎮 ¿Cómo funciona?
 
@@ -26,19 +26,21 @@ Recorres **seis momentos de un día** (despertar, comer, trasladarse, trabajar o
 - ⚡ **Energía**
 - 💜 **Bienestar**
 
-Al final, recibes un **recibo invisible** con los costos visibles (dinero) e invisibles (tiempo, energía, bienestar). No hay puntaje, ganadores ni perdedores.
+Al final, recibes un **recibo invisible** con los costos visibles (dinero) e invisibles (tiempo, energía, bienestar), junto con un espacio para registrar cómo te sentiste. No hay puntaje, ganadores ni perdedores.
 
 ## ✨ Funcionalidades
 
 | Funcionalidad | Descripción |
 |---|---|
-| **Presupuesto personalizado** | Ajusta con cuánto dinero quieres empezar (entre $5.000 y $500.000). |
+| **Flujo por pasos** | Interfaz guiada (Bienvenida → Escenario → Presupuesto) optimizada para móviles. |
+| **Presupuesto personalizado** | Ajusta con cuánto dinero quieres empezar (límites unificados entre $5.000 y $200.000 COP). |
+| **Privacidad por diseño** | Alias opcional que se guarda *solo en el navegador* (`localStorage`). Sin datos personales en el servidor. |
 | **Volver a decidir** | Si te equivocaste, puedes deshacer tu última decisión y elegir otra. |
+| **Cuestionario emocional** | Registro del estado de ánimo al final del día con tarjetas accesibles y adaptadas para móviles. |
 | **Recibo invisible** | Un resumen visual con todos los costos de tu día. |
-| **Descarga en PDF** | Descarga tu recibo como un archivo PDF para compartirlo. |
-| **Historial de partidas** | Guarda tus últimos 10 recorridos en tu navegador. |
-| **Estadísticas anónimas** | Compara tus decisiones con las de otros jugadores. |
-| **Diseño responsive** | Funciona en celular, tablet y computador. |
+| **Historial de partidas** | Guarda tus últimos 10 recorridos de forma segura en tu navegador. |
+| **Estadísticas anónimas** | Compara tus decisiones con las de otros jugadores (con umbral mínimo de *k-anonimato*). |
+| **Diseño responsive** | Funciona en celular, tablet y computador, con modo oscuro/claro automático. |
 
 ## 🛠️ Tecnologías
 
